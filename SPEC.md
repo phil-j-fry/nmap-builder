@@ -1,0 +1,10 @@
+# Nmap parser and builder: current product specification
+The primary audience is a beginner reading an Nmap guide. The product explains requested behavior, builds command text, and optionally counts IPv4 scope. Remove device models, device editors, synthetic replies, run buttons, transcripts, and playback from all active workflows.
+
+Keep the command prominent. Preserve raw typed text and show a breakdown in source order. Search the shared catalog by flag, meaning, or category; select an option, provide its argument when required, and add it to the command. Let users add targets and remove flags. Unrecognized constructs should remain visible and never be presented as verified. Use text-only DOM insertion for command values and never execute commands, expand variables or fetch targets.
+
+Pin scope to a named Nmap release. Include canonical long and short flags, scan and discovery families, aliases and retired forms with status notes. Maintain a reproducible inventory against the upstream parser and retest arity when upgrading. Distinguish recognition from semantic validation. Do not claim an inventory of every NSE script argument, platform-specific behavior or shell spelling. Explicitly label future additions and remaining gaps.
+
+The OT example must parse eight options, including both named lists, timings and the literal output basename. Explain without requiring files; do not report a target count until both lists are provided. Treat an explicitly applied empty exclusion list differently from a missing list. Support distinct IPv4/CIDR scope with overlapping entries and subtraction without enumerating addresses. Keep hostnames and complex targets symbolic.
+
+Next validation: browser walkthrough for editor/builder round trips, keyboard interaction, narrow widths, removal from grouped flags, list handling, and validation failures. Further semantic expansion: per-flag value domains, version/build constraints, script argument reference, common cross-option conflicts. No scan engine is planned.

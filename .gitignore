@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+._*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Node (tests use only built-ins, but in case tooling is added)
+node_modules/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Local/agent scratch
+.env
+*.local
+tmp/
+
+# Maestri canvas config (agent roles)
+.maestri/

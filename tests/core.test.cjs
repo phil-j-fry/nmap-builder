@@ -89,9 +89,9 @@ test('R4 shell operators stop parsing (Decisions round 2)', async t => {
   });
   await t.test('background &', () => { const p = parse('nmap -sS 10.0.0.1 &'); assert.deepEqual(T(p), ['10.0.0.1']); assert.ok(warns(p).includes('shell-operator')); });
   await t.test('value never taken from shell segment', () => assert.ok(errors(parse('nmap -oN | tee x 10.0.0.1')).includes('missing-value')));
-  for (const s of ["nmap 'a;b' 10.0.0.1", 'nmap "a|b" 10.0.0.1', 'nmap a\;b 10.0.0.1', "nmap 'x > y' 10.0.0.1", 'nmap "a&&b" 10.0.0.1', 'nmap a\\>b 10.0.0.1'])
+  for (const s of ["nmap 'a;b' 10.0.0.1", 'nmap "a|b" 10.0.0.1', 'nmap a\\;b 10.0.0.1', "nmap 'x > y' 10.0.0.1", 'nmap "a&&b" 10.0.0.1', 'nmap a\\>b 10.0.0.1'])
     await t.test('literal: ' + s, () => { const p = parse(s); assert.deepEqual(warns(p), []); assert.equal(T(p).length, 2); });
-  await t.test('literal values keep text', () => assert.deepEqual(T(parse("nmap 'a;b' a\;b")), ['a;b', 'a;b']));
+  await t.test('literal values keep text', () => assert.deepEqual(T(parse("nmap 'a;b' a\\;b")), ['a;b', 'a;b']));
 });
 
 test('R4r redirects are skipped and parsing continues (Decisions round 2)', async t => {
