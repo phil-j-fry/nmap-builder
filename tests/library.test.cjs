@@ -133,7 +133,7 @@ test('R35 starterEntries', async t => {
   await t.test('excludes broken, fragment, pipeline', () => { for (const e of data.examples.filter(e => !['valid', 'placeholder'].includes(e.kind))) assert.ok(!st.some(s => s.src === e.src), e.src); });
   await t.test('fields', () => {
     const s = st.find(e => e.src === 'archive/AD/README.md:27');
-    assert.deepEqual(s, { id: 'ccsf:archive/AD/README.md:27', name: 'archive/AD/README.md:27', cmd: 'nmap --script smb2-security-mode -p 445 <TARGET_IP>', src: 'archive/AD/README.md:27', category: 'Active Directory', kind: 'placeholder', tags: ['ccsf', 'active-directory'], source: 'ccsf:archive/AD/README.md:27', readOnly: true });
+    assert.deepEqual(s, { id: 'ccsf:archive/AD/README.md:27', name: 'SMB2 signing / security mode on port 445', cmd: 'nmap --script smb2-security-mode -p 445 <TARGET_IP>', src: 'archive/AD/README.md:27', category: 'Active Directory', kind: 'placeholder', tags: ['ccsf', 'active-directory'], source: 'ccsf:archive/AD/README.md:27', readOnly: true });
   });
   await t.test('unique ids, every src kept', () => { assert.equal(new Set(st.map(e => e.id)).size, st.length); assert.ok(st.every(e => /:\d+$/.test(e.src))); });
   await t.test('title and default category', () => { const s = plain(l.starterEntries({ examples: [{ src: 'x.md:1', cmd: 'nmap 10.0.0.1', kind: 'valid', title: 'Hello' }] })); assert.equal(s[0].name, 'Hello'); assert.equal(s[0].category, 'Other'); assert.deepEqual(s[0].tags, ['ccsf', 'other']); });

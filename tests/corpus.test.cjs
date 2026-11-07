@@ -32,6 +32,8 @@ for (const [file, data] of corpora) {
         assert.equal(typeof ex.cmd, 'string');
         assert.ok(!seen.has(ex.cmd), 'duplicate cmd in corpus'); seen.add(ex.cmd);
         for (const k of Object.keys(ex.expect || {})) assert.ok(EXPECT_KEYS.has(k), `unknown expect key "${k}"`);
+        if (ex.title !== undefined) assert.ok(typeof ex.title === 'string' && ex.title.trim() && ex.title.length <= 60, 'title must be 1-60 chars');
+        if (['valid', 'placeholder'].includes(ex.kind)) assert.ok(ex.title, 'starter-set kinds (valid, placeholder) need a title (Phil, 2026-11-07)');
         const e = { ...KINDS[ex.kind], ...(ex.expect || {}) };
         const p = parse(ex.cmd), info = () => `\n  cmd: ${ex.cmd}\n  issues: ${JSON.stringify(plain(p.issues))}\n  warnings: ${JSON.stringify(plain(p.warnings))}\n  notes: ${JSON.stringify(plain(p.notes))}`;
         const E = codes(p, 'error'), W = codes(p, 'warn'), N = codes(p, 'note');

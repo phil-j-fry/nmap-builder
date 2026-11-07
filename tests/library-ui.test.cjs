@@ -179,14 +179,14 @@ test('R35 starter set UI', async t => {
   await t.test('read-only: no delete/edit controls, never stored', () => { for (const r of u.$$('.starter-list .starter-entry')) assert.ok(!r.querySelector('.lib-delete') && !r.querySelector('.lib-open')); assert.equal(u.stored(), null); });
   await t.test('open loads command, not editing', async () => {
     u.starterRow('playbooks/recon/RECON-GUIDE.md:108').querySelector('.starter-open').click();
-    assert.equal(u.$('.cmd').value, 'nmap -sL -n -iL scope.txt --excludefile exclude.txt'); assert.equal(u.$('.lib-name').value, 'playbooks/recon/RECON-GUIDE.md:108');
+    assert.equal(u.$('.cmd').value, 'nmap -sL -n -iL scope.txt --excludefile exclude.txt'); assert.equal(u.$('.lib-name').value, 'List scope minus exclusions; no probes, no DNS');
     await wait(350); assert.equal(u.w.location.hash, '#cmd=' + encodeURIComponent('nmap -sL -n -iL scope.txt --excludefile exclude.txt'));
     u.need('.lib-save').click(); assert.equal(u.rows().length, 1, 'save after starter open creates a user copy'); assert.ok(u.starterRow('playbooks/recon/RECON-GUIDE.md:108'), 'starter row untouched');
   });
   await t.test('copy to my library, then duplicate skipped', () => {
     const v = load(), r = () => v.starterRow('archive/ICS/Readme.md:10');
     r().querySelector('.starter-save').click();
-    const e = v.stored().entries; assert.equal(e.length, 1); assert.equal(e[0].source, 'ccsf:archive/ICS/Readme.md:10'); assert.equal(e[0].name, 'archive/ICS/Readme.md:10'); assert.deepEqual(e[0].tags, ['ccsf', 'ot-ics']); assert.equal(e[0].cmd, 'nmap -Pn -sU -p47808 --script bacnet-info <target>');
+    const e = v.stored().entries; assert.equal(e.length, 1); assert.equal(e[0].source, 'ccsf:archive/ICS/Readme.md:10'); assert.equal(e[0].name, 'BACnet device info over UDP 47808, no ping; needs root'); assert.deepEqual(e[0].tags, ['ccsf', 'ot-ics']); assert.equal(e[0].cmd, 'nmap -Pn -sU -p47808 --script bacnet-info <target>');
     r().querySelector('.starter-save').click(); assert.equal(v.stored().entries.length, 1); assert.match(v.text('.lib-msg'), /already/i);
   });
 });
