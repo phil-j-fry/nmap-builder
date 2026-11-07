@@ -183,9 +183,256 @@ function changed() {
 
 function loadHash() {
   const v = decodeHash(location.hash);
-  if (v !== null && v !== cmd.value) { cmd.value = v; refresh(); }
+  if (v !== null && v !== cmd.value) {
+    cmd.value = v;
+    refresh();
+    // A command from a new link is not the entry being edited (Plumb P2-5).
+    if (editingId) { setEditing(null); libMsg('Loaded a command from the link. Save creates a new entry.'); }
+  }
 }
 
+// ---- Saved-command library (R32–R34) ----
+// Storage may be blocked (getter throws) or full (setItem throws); the library then works in memory.
+const storage = (() => { try { return window.localStorage; } catch { return null; } })();
+let library = [], editingId = null, draftSource = null, storageOk = true, pendingDelete = null;
+const libMsg = t => set('.lib-msg', t);
+const UNAVAILABLE = 'Browser storage is unavailable, so saved commands last only for this session. Use Export to keep a copy.';
+const plural = (n, word) => n + ' ' + word + (n === 1 ? '' : 's');
+const fullMsg = () => `The library is full (${LIBRARY_LIMITS.entries} saved commands). Delete some, or export and start a new library, before adding more.`;
+
+// Which saved entry Save updates (null: Save creates a new entry). Shown next to Save.
+function setEditing(entry) {
+  editingId = entry ? entry.id : null;
+  draftSource = entry ? entry.source : null;
+  set('.lib-editing', entry ? 'Editing: ' + entry.name : '');
+}
+
+function commandStatus(text) {
+  const p = parse(text, map);
+  if (p.issues.length) return plural(p.issues.length, 'problem');
+  if (p.notes.length) return 'Fill in placeholders';
+  return 'Parses cleanly' + (p.warnings.length ? ' (' + plural(p.warnings.length, 'warning') + ')' : '');
+}
+
+function persist() {
+  if (storageOk && writeLibrary(storage, library)) return true;
+  libMsg(storageOk ? 'This change could not be saved: browser storage is full or blocked. It is kept for this session; use Export to keep a copy.' : UNAVAILABLE);
+  return false;
+}
+
+function button(className, text, name, onClick) {
+  const b = el('button', { type: 'button', className, textContent: text });
+  b.setAttribute('aria-label', text + ' ' + name);
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+function openCommand(text) {
+  cmd.value = text;
+  changed(); // explanation, breakdown and hash update as for typing
+}
+
+function renderLibrary() {
+  pendingDelete = null; // any re-render cancels a pending delete confirmation
+  const tagSel = $('.lib-tag'), current = tagSel.value, tags = allTags(library);
+  tagSel.replaceChildren(opt('', 'All tags'), ...tags.map(t => opt(t)));
+  tagSel.value = tags.includes(current) ? current : '';
+  const shown = searchLibrary(library, { query: $('.lib-search').value, tag: tagSel.value });
+  $('.lib-list').replaceChildren(...shown.map(libraryRow));
+  if (!shown.length) $('.lib-list').append(el('p', { className: 'note', textContent: library.length ? 'No saved commands match.' : 'No saved commands yet.' }));
+}
+
+function libraryRow(e) {
+  const del = button('lib-delete', 'Delete', e.name, () => removeEntry(e, del));
+  const row = el('div', { className: 'lib-entry' },
+    el('div', { className: 'lib-entry-name', textContent: e.name }),
+    el('code', { textContent: e.cmd }),
+    el('div', { className: 'lib-meta' },
+      el('span', { className: 'lib-entry-tags', textContent: e.tags.length ? 'Tags: ' + e.tags.join(', ') : 'No tags' }),
+      el('span', { className: 'lib-status', textContent: commandStatus(e.cmd) })),
+    el('div', { className: 'lib-actions' },
+      button('lib-open', 'Open', e.name, () => {
+        openCommand(e.cmd);
+        $('.lib-name').value = e.name;
+        $('.lib-tags').value = e.tags.join(', ');
+        setEditing(e);
+        libMsg(`Editing "${e.name}". Save updates it; New starts a separate entry.`);
+      }),
+      button('lib-copy', 'Copy', e.name, () => copyText(e.cmd)),
+      del));
+  row.setAttribute('data-id', e.id);
+  return row;
+}
+
+function copyText(text) {
+  const clip = navigator.clipboard;
+  if (!clip || typeof clip.writeText !== 'function') { libMsg('Clipboard access is not available here; select the command and copy it manually.'); return; }
+  clip.writeText(text).then(() => libMsg('Command copied.'), () => libMsg('Copying was blocked; select the command and copy it manually.'));
+}
+
+function removeEntry(e, b) {
+  if (pendingDelete && pendingDelete.id === e.id) {
+    library = library.filter(x => x.id !== e.id);
+    if (editingId === e.id) setEditing(null);
+    const saved = persist();
+    renderLibrary();
+    if (saved) libMsg(`Deleted "${e.name}".`);
+    return;
+  }
+  if (pendingDelete) { pendingDelete.button.textContent = 'Delete'; pendingDelete.button.setAttribute('aria-label', 'Delete ' + pendingDelete.name); }
+  pendingDelete = { id: e.id, name: e.name, button: b };
+  b.textContent = 'Confirm delete';
+  b.setAttribute('aria-label', 'Confirm delete ' + e.name);
+}
+
+function saveCurrent() {
+  const nameEl = $('.lib-name'), name = nameEl.value, tags = $('.lib-tags').value;
+  if (!name.trim()) { nameEl.reportValidity(); return; }
+  if (!cmd.value.trim()) { libMsg('There is no command to save yet: type or build one first.'); return; }
+  const editing = editingId && library.find(x => x.id === editingId);
+  if (!editing && library.length >= LIBRARY_LIMITS.entries) { libMsg(fullMsg()); return; }
+  const r = editing
+    ? updateEntry(editing, { name, cmd: cmd.value, tags, source: draftSource }, Date.now())
+    : makeEntry({ name, cmd: cmd.value, tags, source: draftSource }, { now: Date.now() });
+  if (!r.ok) {
+    if (r.error === 'name') nameEl.reportValidity();
+    libMsg(r.error === 'name' ? `Names can be 1–${LIBRARY_LIMITS.name} characters.` : `Commands can be up to ${LIBRARY_LIMITS.cmd} characters.`);
+    return;
+  }
+  library = editing ? library.map(x => (x.id === editing.id ? r.entry : x)) : [...library, r.entry];
+  if (editing) setEditing(r.entry); else draftSource = null;
+  const saved = persist();
+  renderLibrary();
+  if (saved) libMsg(editing ? `Updated "${r.entry.name}".` : `Saved "${r.entry.name}".`);
+}
+
+function newEntry() {
+  $('.lib-name').value = '';
+  $('.lib-tags').value = '';
+  setEditing(null);
+  libMsg('');
+}
+
+function exportFile() {
+  const blob = new Blob([exportLibrary(library, Date.now())], { type: 'application/json' });
+  const url = URL.createObjectURL(blob), tooBig = blob.size > LIBRARY_LIMITS.importBytes;
+  const a = el('a', { href: url, download: `nmap-library-${new Date().toISOString().slice(0, 10)}.json` });
+  root.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  libMsg(`Exported ${plural(library.length, 'saved command')}.` + (tooBig ? ` The file is over the import limit (${LIBRARY_LIMITS.importBytes.toLocaleString('en-US')} bytes), so this workbook cannot import it back in one piece.` : ''));
+}
+
+async function importFile() {
+  const input = $('.lib-import'), file = input.files && input.files[0];
+  if (!file) return;
+  if (typeof file.size === 'number' && file.size > LIBRARY_LIMITS.importBytes) { // never load a huge file (R33a)
+    input.value = '';
+    libMsg(`Import failed: the file is larger than ${LIBRARY_LIMITS.importBytes.toLocaleString('en-US')} bytes.`);
+    return;
+  }
+  let text;
+  try { text = await file.text(); } catch { libMsg('The file could not be read.'); input.value = ''; return; }
+  input.value = '';
+  const r = parseLibraryFile(text);
+  if (!r.ok) { libMsg('Import failed: ' + r.errors[0]); return; }
+  const m = mergeLibrary(library, r.entries, Date.now());
+  library = m.entries;
+  const saved = persist();
+  renderLibrary();
+  if (saved) libMsg(`Imported ${m.added}; skipped ${m.skipped} already in the library; ${r.dropped} invalid.` + (m.rejected ? ` ${m.rejected} not added: library full (${LIBRARY_LIMITS.entries} saved commands).` : ''));
+}
+
+function loadLibrary() {
+  const r = readLibrary(storage);
+  library = r.entries;
+  if (r.status === 'unavailable') { storageOk = false; libMsg(UNAVAILABLE); }
+  else if (r.status === 'corrupt') {
+    // Never overwrite an unreadable library unless its backup copy is verified (R32a).
+    storageOk = !!r.backupKey;
+    libMsg('The saved library could not be read' + (r.backupKey
+      ? `, so its contents were kept in browser storage under ${r.backupKey} and a new library starts empty.`
+      : ', and no backup copy could be made, so changes stay in this session only and the stored data is left untouched. Use Export to keep a copy.'));
+  } else if (r.dropped) libMsg(`${plural(r.dropped, 'saved entry')} could not be read and ${r.dropped === 1 ? 'was' : 'were'} skipped.`);
+  renderLibrary();
+}
+
+
+// ---- CCSF starter set (R35): read-only, never stored ----
+let starters = [];
+
+function renderStarterOrigin() {
+  const { repo, commit } = starterOrigin(STARTER_DATA), box = $('.starter-origin');
+  const source = /^https:\/\//.test(repo || '') ? el('a', { href: repo, textContent: repo }) : el('span', { textContent: repo || 'an unknown source' });
+  box.replaceChildren('Real commands from ', source, ` at commit ${String(commit || '').slice(0, 7)}. Each one keeps its source file:line. Copy one to your library to edit it.`);
+  const cats = [...new Set(starters.map(s => s.category))].sort();
+  $('.starter-category').replaceChildren(opt('', 'All categories'), ...cats.map(c => opt(c)));
+}
+
+function renderStarters() {
+  const cat = $('.starter-category').value;
+  $('.starter-list').replaceChildren(...starters.filter(s => !cat || s.category === cat).map(starterRow));
+}
+
+function starterRow(s) {
+  const row = el('div', { className: 'starter-entry' },
+    ...(s.name !== s.src ? [el('div', { className: 'lib-entry-name', textContent: s.name })] : []),
+    el('code', { textContent: s.cmd }),
+    el('div', { className: 'lib-meta' },
+      el('span', { className: 'starter-src', textContent: s.src }),
+      el('span', { className: 'starter-category-label', textContent: s.category }),
+      el('span', { className: 'starter-kind', textContent: s.kind === 'placeholder' ? 'Has placeholders: fill this in before running' : 'Complete command' }),
+      el('span', { className: 'lib-status', textContent: commandStatus(s.cmd) })),
+    el('div', { className: 'lib-actions' },
+      button('starter-open', 'Open', s.name, () => {
+        openCommand(s.cmd);
+        $('.lib-name').value = s.name;
+        $('.lib-tags').value = s.tags.join(', ');
+        setEditing(null); // saving creates a user copy
+        draftSource = s.source;
+        libMsg('Starter command opened. Save creates your own copy.');
+      }),
+      button('starter-save', 'Copy to my library', s.name, () => {
+        const r = makeEntry({ name: s.name, cmd: s.cmd, tags: s.tags, source: s.source }, { now: Date.now() });
+        if (!r.ok) { libMsg(`This starter command cannot be copied: its ${r.error === 'name' ? `name is not 1–${LIBRARY_LIMITS.name} characters` : 'command is empty or too long'}.`); return; }
+        const m = mergeLibrary(library, [r.entry], Date.now());
+        if (m.rejected) { libMsg(fullMsg()); return; }
+        if (!m.added) { libMsg(`"${r.entry.name}" is already in your library.`); return; }
+        library = m.entries;
+        const saved = persist();
+        renderLibrary();
+        if (saved) libMsg(`Copied "${s.name}" to your library.`);
+      })));
+  row.setAttribute('data-src', s.src);
+  return row;
+}
+
+// The library needs library.js and STARTER_DATA (bundled by build.py). Without them the page still works as the Phase 1 parser.
+function initLibrary() {
+  if (typeof readLibrary !== 'function' || typeof STARTER_DATA === 'undefined') {
+    for (const s of ['details.library', 'details.starter']) { const d = $(s); if (d) d.hidden = true; }
+    return;
+  }
+  $('.lib-save').addEventListener('click', saveCurrent);
+  $('.lib-new').addEventListener('click', newEntry);
+  for (const s of ['.lib-search', '.lib-tag']) for (const type of ['input', 'change']) $(s).addEventListener(type, renderLibrary);
+  $('.lib-export').addEventListener('click', exportFile);
+  $('.lib-import').addEventListener('change', importFile);
+  window.addEventListener('storage', ev => {
+    if (ev.key !== LIBRARY_KEY && ev.key !== null) return;
+    const r = readLibrary(storage);
+    if (r.status === 'ok' || r.status === 'empty') { library = r.entries; renderLibrary(); }
+  });
+  $('.starter-category').addEventListener('change', renderStarters);
+  $('.starter-category').addEventListener('input', renderStarters);
+  starters = starterEntries(STARTER_DATA);
+  loadLibrary();
+  renderStarterOrigin();
+  renderStarters();
+}
+
+// ---- Boot ----
 cmd.addEventListener('input', changed);
 window.addEventListener('hashchange', loadHash);
 set('.coverage', map.size + ' named forms, including aliases and retired switches, checked against the literal long-option table and short-option string of Nmap 7.993. ' +
@@ -194,4 +441,5 @@ const initial = decodeHash(location.hash);
 if (initial !== null) cmd.value = initial;
 filter();
 refresh();
+initLibrary();
 })();

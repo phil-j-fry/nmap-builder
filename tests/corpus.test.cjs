@@ -14,7 +14,7 @@ const KINDS = {
   pipeline: { errors: [], warningsInclude: ['shell-operator'], hasShell: true },
 };
 const EXPECT_KEYS = new Set(['errors', 'warnings', 'notes', 'errorsInclude', 'warningsInclude', 'notesInclude', 'flags', 'targets', 'placeholders', 'scope', 'rules', 'minErrors', 'hasShell', 'shellText', 'files']);
-const EXAMPLE_KEYS = new Set(['src', 'cmd', 'kind', 'expect', 'comment']);
+const EXAMPLE_KEYS = new Set(['src', 'cmd', 'kind', 'category', 'title', 'expect', 'comment']);
 const sorted = a => [...a].sort();
 
 const dir = path.join(__dirname, 'fixtures');

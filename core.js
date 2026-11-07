@@ -366,10 +366,20 @@ const SAME_RULE = {
 // Every flag whose value is checked (R13). README.md "Checked values" lists the same keys.
 const CHECKED_FLAGS = [...Object.keys(VALUE_RULES), ...Object.keys(SAME_RULE)];
 
+// Nmap reads a unitless time as seconds and refuses one at or above these limits (parse_tval_msecs, R29).
+const UNITLESS_TIME_LIMIT = {
+  '--max-rtt-timeout': 50, '--min-rtt-timeout': 50, '--initial-rtt-timeout': 50,
+  '--scan-delay': 100, '--max-scan-delay': 100, '--host-timeout': 10000,
+};
+
 function checkValue(key, val) {
   const rule = VALUE_RULES[SAME_RULE[key] || key];
   if (!rule || val === null || val === '' || hasPlaceholder(val)) return null;
-  return rule[0](val) ? null : `${key} ${val}: ${rule[1]}`;
+  if (!rule[0](val)) return `${key} ${val}: ${rule[1]}`;
+  const limit = UNITLESS_TIME_LIMIT[key];
+  if (limit !== undefined && /^[\d.]+$/.test(val) && +val >= limit)
+    return `${key} ${val}: Nmap reads a time without a unit as seconds and refuses ${limit} or more ("the default unit is seconds"). Use "${val}ms" for milliseconds, or add a unit (s, m, h).`;
+  return null;
 }
 
 // ---------------------------------------------------------------------------

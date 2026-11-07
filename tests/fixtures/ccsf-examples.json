@@ -2,32 +2,37 @@
  "source": "https://github.com/nationalcptc-teamtools/City-College-of-San-Francisco",
  "commit": "b532b18c1e0dfb22dbfe7d15bea7c9b70caa38e3",
  "extracted": "2026-11-07",
- "note": "Real commands from the team playbooks. kind is a first-pass label by the manager; Gadfly owns the expected outcomes. expect (optional) overrides the per-kind defaults; see REQUIREMENTS.md R26 for keys.",
+ "note": "Real commands from the team playbooks. kind is a first-pass label by the manager; Gadfly owns the expected outcomes. expect (optional) overrides the per-kind defaults; see REQUIREMENTS.md R26 for keys. category groups examples for the starter set (R35); new entries should set it (default 'Other').",
  "examples": [
   {
    "src": "archive/AD/README.md:27",
    "cmd": "nmap --script smb2-security-mode -p 445 <TARGET_IP>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Active Directory"
   },
   {
    "src": "archive/AD/README.md:30",
    "cmd": "nmap --script smb-protocols -p 445 <TARGET_IP>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Active Directory"
   },
   {
    "src": "archive/AD/README.md:33",
    "cmd": "nmap -sV -p 389,636,3268,3269 --script ldap-search,ldap-rootdse,ldap-novell-getpass <TARGET_IP>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Active Directory"
   },
   {
    "src": "archive/AD/README.md:40",
    "cmd": "nmap --script smb-vuln-ms17-010 -p 445 <IP_ADDRESS>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Active Directory"
   },
   {
    "src": "archive/ICS/Readme.md:9",
    "cmd": "nmap -Pn -sT --scan-delay 1s --max-parallelism 1-p80,102,443,502,1089, 1091,2222,4000,4840, 20000,34962,34964, 34980,44818,47808, 55000,55003 <target>",
    "kind": "broken",
+   "category": "OT / ICS",
    "comment": "--max-parallelism swallowed '1-p80,...' (missing space before -p), and the spaced port list leaks numeric targets. Must fail.",
    "expect": {
     "errorsInclude": [
@@ -39,62 +44,74 @@
   {
    "src": "archive/ICS/Readme.md:10",
    "cmd": "nmap -Pn -sU -p47808 --script bacnet-info <target>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "OT / ICS"
   },
   {
    "src": "archive/ICS/Readme.md:11",
    "cmd": "nmap -Pn -sU -p44818 --script enip-info <target>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "OT / ICS"
   },
   {
    "src": "archive/ICS/Readme.md:12",
    "cmd": "nmap -Pn -sT -p502 --script modbus-discover <target>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "OT / ICS"
   },
   {
    "src": "archive/ICS/Readme.md:13",
    "cmd": "nmap -Pn -sT -p1911,4911 --script fox-info <target>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "OT / ICS"
   },
   {
    "src": "archive/ICS/Readme.md:14",
    "cmd": "nmap -Pn -sT -p1962 --script pcworx-info <target>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "OT / ICS"
   },
   {
    "src": "archive/Scans/README.md:6",
    "cmd": "nmap --script modbus-discover.nse --script-args='modbus-discover.agressive=true' -p 502 <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "OT / ICS"
   },
   {
    "src": "archive/Scans/README.md:10",
    "cmd": "nmap --script bacnet-info -sU -p 47808 <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "OT / ICS"
   },
   {
    "src": "checklists/10-ad-internal.md:12",
    "cmd": "nmap -sn -n -PE -iL scope.txt --excludefile exclude.txt -oA disc-icmp",
-   "kind": "valid"
+   "kind": "valid",
+   "category": "Active Directory"
   },
   {
    "src": "checklists/10-ad-internal.md:13",
    "cmd": "nmap -sn -n -PS22,80,135,443,445,3389 -iL scope.txt --excludefile exclude.txt -oA disc-syn",
-   "kind": "valid"
+   "kind": "valid",
+   "category": "Active Directory"
   },
   {
    "src": "checklists/10-ad-internal.md:14",
    "cmd": "nmap -sn -n -PA22,80,443,3389 -iL scope.txt --excludefile exclude.txt -oA disc-ack",
-   "kind": "valid"
+   "kind": "valid",
+   "category": "Active Directory"
   },
   {
    "src": "checklists/10-ad-internal.md:15",
    "cmd": "nmap -sn -n -PR -iL scope.txt --excludefile exclude.txt -oA disc-arp",
-   "kind": "valid"
+   "kind": "valid",
+   "category": "Active Directory"
   },
   {
    "src": "checklists/10-ad-internal.md:18",
    "cmd": "nmap -n -sC -sV <host> -oA svc --excludefile exclude.txt --exclude-ports <brittle ports>",
    "kind": "placeholder",
+   "category": "Active Directory",
    "expect": {
     "placeholders": [
      "<host>",
@@ -109,67 +126,80 @@
   {
    "src": "checklists/10-ad-internal.md:48",
    "cmd": "nmap --script smb-vuln-ms17-010 -p 445 <TARGET_IP>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Active Directory"
   },
   {
    "src": "checklists/15-linux.md:10",
    "cmd": "nmap -n -sT -p 21,22,25,111,2049,3306,5432,6379,27017,465,587,873 <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Linux"
   },
   {
    "src": "checklists/15-linux.md:12",
    "cmd": "nmap -n -sV -p <port> <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Linux"
   },
   {
    "src": "checklists/15-linux.md:16",
    "cmd": "nmap -n -sV -p 3306,5432,6379,27017 <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Linux"
   },
   {
    "src": "checklists/15-linux.md:21",
    "cmd": "nmap -n -p 21 --script ftp-anon <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Linux"
   },
   {
    "src": "checklists/30-ot-ics-safe.md:15",
    "cmd": "nmap -sT -Pn -p 502,102,44818 --max-rate 10 <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "OT / ICS"
   },
   {
    "src": "checklists/30-ot-ics-safe.md:16",
    "cmd": "nmap -sT -p 502 --script modbus-discover <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "OT / ICS"
   },
   {
    "src": "checklists/30-ot-ics-safe.md:18",
    "cmd": "nmap -Pn -sU -p 47808 --script bacnet-info <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "OT / ICS"
   },
   {
    "src": "checklists/30-ot-ics-safe.md:19",
    "cmd": "nmap -Pn -sU -p 44818 --script enip-info <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "OT / ICS"
   },
   {
    "src": "checklists/30-ot-ics-safe.md:20",
    "cmd": "nmap -Pn -sT -p 1911,4911 --script fox-info <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "OT / ICS"
   },
   {
    "src": "checklists/30-ot-ics-safe.md:21",
    "cmd": "nmap -Pn -sT -p 1962 --script pcworx-info <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "OT / ICS"
   },
   {
    "src": "playbooks/general/02-pivoting-and-trust-boundaries.md:26",
    "cmd": "nmap -n -sT -p 53,88,135,139,389,445,636,1433,3389,5985 <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Pivoting"
   },
   {
    "src": "playbooks/ot/01-unauthenticated-hmi.md:30",
    "cmd": "nmap -sT -Pn -p <HMI_WEB_PORT>,5900 --max-rate 10 <host>",
    "kind": "placeholder",
+   "category": "OT / ICS",
    "expect": {
     "placeholders": [
      "<HMI_WEB_PORT>",
@@ -183,12 +213,14 @@
   {
    "src": "playbooks/ot/02-default-hmi-passwords.md:30",
    "cmd": "nmap -sT -Pn -p <APPROVED_PORT> --max-rate 10 <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "OT / ICS"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:60",
    "cmd": "nmap -sV",
    "kind": "fragment",
+   "category": "Recon",
    "expect": {
     "flags": [
      "-sV"
@@ -199,12 +231,14 @@
   {
    "src": "playbooks/recon/RECON-GUIDE.md:108",
    "cmd": "nmap -sL -n -iL scope.txt --excludefile exclude.txt",
-   "kind": "valid"
+   "kind": "valid",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:114",
    "cmd": "nmap -sL -n -iL scope.txt --excludefile exclude.txt | grep -Fw 'for 10.0.5.20'",
    "kind": "pipeline",
+   "category": "Recon",
    "expect": {
     "shellText": "| grep -Fw 'for 10.0.5.20'",
     "targets": [],
@@ -223,6 +257,7 @@
    "src": "playbooks/recon/RECON-GUIDE.md:179",
    "cmd": "sudo nmap -n -sS -sU -p T:80,U:161 <host>",
    "kind": "placeholder",
+   "category": "Recon",
    "expect": {
     "flags": [
      "-n",
@@ -236,27 +271,32 @@
   {
    "src": "playbooks/recon/RECON-GUIDE.md:328",
    "cmd": "sudo nmap -sn -n -PE -iL scope.txt --excludefile exclude.txt -oA disc-icmp",
-   "kind": "valid"
+   "kind": "valid",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:329",
    "cmd": "sudo nmap -sn -n -PS22,80,135,443,445,3389 -iL scope.txt --excludefile exclude.txt -oA disc-syn",
-   "kind": "valid"
+   "kind": "valid",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:332",
    "cmd": "nmap -sL -iL live.txt --excludefile exclude.txt -oN names.txt",
-   "kind": "valid"
+   "kind": "valid",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:333",
    "cmd": "nmap -n --top-ports 100 --max-rate 100 --exclude-ports <OT-string> -iL live.txt --excludefile exclude.txt -oA top100",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:334",
    "cmd": "nmap -n --top-ports 1000 --exclude-ports <OT-string> -iL <claimed-hosts> --excludefile exclude.txt -oA top1000",
    "kind": "placeholder",
+   "category": "Recon",
    "expect": {
     "placeholders": [
      "<OT-string>",
@@ -268,32 +308,38 @@
   {
    "src": "playbooks/recon/RECON-GUIDE.md:335",
    "cmd": "nmap -n -p- --max-rate 300 --exclude-ports <OT-string> <host> -oA full-<host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:336",
    "cmd": "nmap -n -sV -p <open-ports> <host> -oA ver-<host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:337",
    "cmd": "nmap -n -sC -p <open-ports> <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:338",
    "cmd": "sudo nmap -n -sU --top-ports 20 --max-rate 50 <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:339",
    "cmd": "nmap -n --script <name> -p <port> <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:434",
    "cmd": "nmap --resume <name>.nmap",
    "kind": "placeholder",
+   "category": "Recon",
    "expect": {
     "placeholders": [
      "<name>"
@@ -305,12 +351,14 @@
   {
    "src": "playbooks/recon/RECON-GUIDE.md:440",
    "cmd": "sudo nmap -sn -n -PE -iL <targets> -oA after-<HHMM>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:445",
    "cmd": "nmap -sT -n -p <the ports open before> <host> -oA recheck-<host>-<HHMM>",
    "kind": "placeholder",
+   "category": "Recon",
    "expect": {
     "placeholders": [
      "<the ports open before>",
@@ -327,6 +375,7 @@
    "src": "playbooks/recon/RECON-GUIDE.md:456",
    "cmd": "nmap -n --top-ports 100 --max-rate 100 -oA top100 10.0.5.20",
    "kind": "valid",
+   "category": "Recon",
    "expect": {
     "scope": "^1 distinct IPv4 address in scope"
    }
@@ -335,6 +384,7 @@
    "src": "playbooks/recon/RECON-GUIDE.md:503",
    "cmd": "nmap -sT -n -p 102,502,2404,4840,20000,44818 --max-rate 10 --max-retries 1 -iL ot-ranges.txt --excludefile exclude.txt -oA ot-find",
    "kind": "valid",
+   "category": "Recon",
    "expect": {
     "flags": [
      "-sT",
@@ -356,22 +406,26 @@
   {
    "src": "playbooks/recon/RECON-GUIDE.md:596",
    "cmd": "nmap -sT -n -p 53,88,135,139,389,445,636,1433,3389,5985 <host> -oA win-<host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:609",
    "cmd": "nmap -n -p 445 --script smb-os-discovery,smb-protocols,smb2-security-mode <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:610",
    "cmd": "nmap -n -p 1433 --script ms-sql-info <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:616",
    "cmd": "nmap -sC -sV",
    "kind": "fragment",
+   "category": "Recon",
    "expect": {
     "flags": [
      "-sC",
@@ -383,67 +437,80 @@
   {
    "src": "playbooks/recon/RECON-GUIDE.md:692",
    "cmd": "nmap -sT -n -p 21,22,25,111,2049,3306,5432,6379,27017,465,587,873 <host> -oA lin-<host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:702",
    "cmd": "nmap -n -p 25 --script smtp-commands <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:703",
    "cmd": "nmap -n -p 25 --script smtp-enum-users <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:812",
    "cmd": "nmap -sT -n -p 80,443,8000,8008,8080,8081,8443,8888,9000 <host> -oA web-<host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:820",
    "cmd": "nmap -n -p 80,443 --script http-title,http-headers,http-methods <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:1030",
    "cmd": "nmap -n -sV -p 21 <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:1043",
    "cmd": "nmap -n -p 3389 --script rdp-enum-encryption <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:1055",
    "cmd": "sudo nmap -n -sn -PE -iL scope.txt --excludefile exclude.txt -oA disc-icmp",
-   "kind": "valid"
+   "kind": "valid",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:1058",
    "cmd": "nmap -n -sV -p <ports> <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:1059",
    "cmd": "nmap -n -sT -p 102,502,2404,4840,20000,44818 --max-rate 10 --max-retries 1 -iL ot-ranges.txt --excludefile exclude.txt -oA ot-find",
-   "kind": "valid"
+   "kind": "valid",
+   "category": "Recon"
   },
   {
    "src": "playbooks/recon/RECON-GUIDE.md:1094",
    "cmd": "nmap -n -sT -p 80,443,8000,8008,8080,8081,8443,8888,9000 <host>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Recon"
   },
   {
    "src": "playbooks/windows/01-credentials-in-ldap.md:25",
    "cmd": "nmap -Pn -sV -p 389,636,3268,3269 --script ldap-search,ldap-rootdse,ldap-novell-getpass <TARGET_IP>",
-   "kind": "placeholder"
+   "kind": "placeholder",
+   "category": "Windows"
   },
   {
    "src": "scripts/logged-shell.md:26",
    "cmd": "nmap -sn -PE -iL scope.txt -oA disc-icmp",
-   "kind": "valid"
+   "kind": "valid",
+   "category": "Recon"
   }
  ]
 }

@@ -429,3 +429,162 @@ Open `index.html` from disk in a current Chrome and Firefox and record pass or f
 - R7 (`#` comments), R3 (`dash-lookalike` and `smart-quote`) and R15 (`no-effect`) go beyond the G-decisions but are cheap beginner protections.
 - R14 lists 18 rules rather than "about 10". Each rule is a literal fatal in 7.993 source.
 - `-q` was in the 7.993 getopt string but not in catalog.txt. Gadfly added it as "accepted, no effect". This makes 163 named forms; the legacy count message changes with it.
+
+---
+
+# Phase 2 requirements (R29–R36)
+
+Scope: the SPEC-REVIEW.md "Phase 2 backlog", plus the deferred unitless-time check. Phase 1 requirements and tests stay in force; nothing in Phase 2 may change Phase 1 behavior. New test files:
+
+| File | Covers |
+|---|---|
+| `tests/library.test.cjs` | R29, R31–R33, R35 (pure functions) |
+| `tests/library-ui.test.cjs` | R30, R32, R34–R36 (UI, via `tests/dom-shim.cjs`) |
+
+## R29. Unitless time above Nmap's limit
+
+Nmap reads a unitless time as seconds. When that value is at or above a per-flag limit, it refuses with "Since April 2010, the default unit … is seconds" (`parse_tval_msecs`, nmap.cc:516). This is a `bad-value` whose message suggests the `ms` spelling (for example `Use "100ms"`).
+
+| Flag | Unitless limit (seconds) |
+|---|---|
+| `--max-rtt-timeout`, `--min-rtt-timeout`, `--initial-rtt-timeout` | 50 |
+| `--scan-delay`, `--max-scan-delay` | 100 |
+| `--host-timeout` | 10000 |
+
+The check applies to decimal unitless values too (`60.5` is 60.5 s), matching `tval2msecs` (R29a, review 1).
+
+Pass when the following hold:
+- `--max-rtt-timeout 100`, `--scan-delay 500` and `--host-timeout 10000` each give exactly one `bad-value` whose message contains `ms`.
+- `--max-rtt-timeout 49`, `--max-rtt-timeout 100ms`, `--scan-delay 99`, `--host-timeout 9999` and `--host-timeout 30m` give none.
+- `--script-timeout` and `--stats-every` have no limit (Nmap parses them with `tval2secs`), so `--script-timeout 100000` gives none.
+
+## R30. Build and files
+
+- Library code lives in a new `library.js`. It is pure functions with no DOM, apart from what R34 needs in `ui.js`.
+- `build.py` concatenates `const CATALOG=…`, `const STARTER_DATA=<contents of tests/fixtures/ccsf-examples.json>`, `core.js`, `library.js` and `ui.js`, in that order, into one offline `index.html`.
+- There are still no runtime dependencies and no network requests. The only link out is a plain `<a href>` to the source repository.
+- Every Phase 1 test passes unchanged.
+
+Pass when `index.html` contains `library.js` verbatim and the fixture's `"commit"` value, and the full suite passes.
+
+## R31. Library data model (`library.js`)
+
+Constants:
+- `LIBRARY_KEY = 'nmap-builder.library.v1'`
+- `LIBRARY_FORMAT = 'nmap-builder-library'`
+- `LIBRARY_VERSION = 1`
+- `LIBRARY_LIMITS = {name: 100, cmd: 8000, tag: 32, tags: 10, entries: 1000, importBytes: 32000000}`. (Plumb review: raised from 1,000,000, so a normal full export of about 8.1M characters re-imports. The UI checks `file.size` in bytes, and the text check counts characters, which never exceed the UTF-8 byte count. Export measures the Blob size and, if it is over `importBytes` (possible only with heavily escaped content), still downloads, with a `.lib-msg` warning that the file is over the import limit.)
+
+An entry is `{id, name, cmd, tags, source, created, updated}`:
+- `id` is a non-empty string.
+- `name` is trimmed, 1–100 characters.
+- `cmd` is a string of up to 8000 characters with non-whitespace content, stored exactly as typed (not trimmed).
+- `tags` is an array (see `normalizeTags` below).
+- `source` is `null` or a string, for example `ccsf:archive/AD/README.md:27`.
+- `created` and `updated` are ISO-8601 strings.
+
+Functions:
+- `normalizeTags(x)`: `x` is a comma-separated string or an array. Each tag is trimmed, lowercased, with inner whitespace runs replaced by `-`. A tag is kept only if it matches `^[a-z0-9][a-z0-9_.-]{0,31}$`. Tags are deduplicated in first-seen order, and at most 10 are kept. Example: `'AD, ot ics, OT-ICS, , x!'` gives `['ad', 'ot-ics']`.
+- `makeEntry({name, cmd, tags, source}, {now, id})`: returns `{ok: true, entry}` or `{ok: false, error}`, where `error` names the field (`'name'` or `'cmd'`). `now` is epoch milliseconds, and `created = updated = new Date(now).toISOString()`. Without `id`, a unique id is generated: 1000 calls give 1000 distinct ids.
+- `updateEntry(entry, changes, now)`: returns `{ok, entry}` with the same `id` and `created` and a new `updated`, validated like `makeEntry`. The input entry is not mutated.
+- `searchLibrary(entries, {query, tag})`: query terms are whitespace-separated. Every term must be a case-insensitive substring of name, cmd, tags or source. When `tag` is set it must be one of the entry's tags. Results are sorted by `updated`, newest first, then by name.
+- `allTags(entries)`: sorted, distinct tags.
+
+(R31a, review 1) Stored and imported entries are made consistent: ids must match `^[A-Za-z0-9:._-]{1,64}$` and are unique within a library. The first occurrence keeps its id, and later duplicates or invalid ids get a generated id. A `source` longer than 300 characters becomes `null`.
+
+## R32. Storage resilience
+
+- `readLibrary(storage)` returns `{entries, status, dropped}`, with `status` one of `'ok'`, `'empty'`, `'unavailable'` or `'corrupt'`. It never throws.
+  - `'unavailable'`: `storage` is null, or accessing it throws.
+  - `'empty'`: the key is absent.
+  - `'corrupt'`: the stored value is not JSON or not a library document. Then `entries` is `[]`, and the raw value is first copied to `LIBRARY_KEY + '.backup'` (best effort).
+  - Individually invalid entries are dropped and counted in `dropped`; the status stays `'ok'`.
+- `writeLibrary(storage, entries)` stores the export document (R33) under `LIBRARY_KEY` and returns `true`. It returns `false`, never throwing, when storage is unavailable or full.
+- UI behavior:
+  - Storage that throws on access, or on `setItem` (quota), must not break page boot or any Phase 1 behavior.
+  - The library then works in memory for the session, and `.lib-msg` says that browser storage is unavailable and suggests Export.
+  - A corrupt stored library is never overwritten before the backup exists, and `.lib-msg` says the saved library could not be read.
+  - A `storage` event for `LIBRARY_KEY` (another tab) reloads and re-renders the list.
+
+(R32a, review 1) `readLibrary` also returns `backupKey`: the key under which the raw corrupt value is verified stored (read back equal), or `null`. An existing backup with different content is never overwritten. Use `.backup`, else the first free `.backup-2` … `.backup-10`. If the same raw value is already backed up, reuse that key. The UI allows saving over a corrupt library only when `backupKey` is non-null, and `.lib-msg` names the key.
+
+## R33. Export and import
+
+- `exportLibrary(entries, now)` returns pretty JSON (2-space indent) `{format: LIBRARY_FORMAT, version: 1, exported: <ISO>, entries: [...]}` with only the R31 fields.
+- `parseLibraryFile(text)` returns `{ok, entries, errors, dropped}`. It rejects, with `ok: false` and a readable `errors[0]`, in these cases:
+  - text longer than `importBytes`;
+  - invalid JSON;
+  - a non-object, or a `format` mismatch;
+  - a `version` that is not 1 (an integer above 1 says the file is from a newer version);
+  - `entries` that is not an array, or has more than 1000 items.
+
+  It never evaluates content. Unknown fields are ignored, and invalid entries are dropped and counted. A valid `created`/`updated` is kept, otherwise it is replaced by now. `__proto__` or `constructor` keys in the file must not pollute `Object.prototype`.
+- (R33a, review 1) The UI checks `file.size > importBytes` before reading the file, so a huge file is never loaded into memory.
+- `mergeLibrary(existing, incoming, now)` returns `{entries, added, skipped}`.
+  - An incoming entry whose name, cmd and sorted tags equal an existing entry's is skipped.
+  - Every other entry is added. Its id is regenerated if it collides with an existing id.
+  - Existing entries are never modified.
+- UI:
+  - `.lib-export` downloads `nmap-library-YYYY-MM-DD.json` through a Blob and an `<a download>`.
+  - `.lib-import` (an `<input type="file" accept=".json,application/json">`) reads the file as text, validates, merges, saves, and reports "Imported N … skipped M … D invalid" in `.lib-msg`.
+  - An invalid file leaves the library unchanged and shows the reason.
+  - Imported text renders only through `textContent`.
+
+(Plumb review, data loss) The 1000-entry cap applies to every write path and never to reading your own storage.
+- `readLibrary` accepts a stored library of any length.
+- `mergeLibrary` adds only up to 1000 total and returns `{entries, added, skipped, rejected}`.
+- Save (new entry) and Copy to my library refuse at 1000 with a `.lib-msg` saying the library is full. Editing an existing entry is still allowed.
+- Import reports "N not added: library full".
+
+## R34. Library UI
+
+A `details.library` panel ("Saved commands") contains `.lib-name`, `.lib-tags`, `.lib-save`, `.lib-new`, `.lib-search`, `.lib-tag` (a select: "All tags" plus `allTags`), `.lib-list`, `.lib-export`, `.lib-import` and `.lib-msg` (`role="status"`).
+
+- **Save.** `.lib-save` saves the current `.cmd` text with the name and tags.
+  - A missing name calls `reportValidity` on `.lib-name` and saves nothing. An empty or whitespace command saves nothing and explains why in `.lib-msg`.
+  - Commands with parse errors may be saved.
+  - Saving persists via `writeLibrary`.
+- **Rows.** Each entry is a `.lib-entry[data-id]` row containing `.lib-entry-name`, a `code` with the command, `.lib-entry-tags`, `.lib-status`, and the buttons `.lib-open`, `.lib-copy` and `.lib-delete`.
+  - `.lib-status` uses the Phase 1 parser: "Parses cleanly", "N problem(s)" (errors), or "Fill in placeholders" (notes and no errors).
+  - Rows appear in `searchLibrary` order, filtered live by `.lib-search` and `.lib-tag`.
+- **Open and edit.** `.lib-open` loads the command into `.cmd` through the normal change path (explanation, breakdown and hash all update). It fills `.lib-name` and `.lib-tags` and makes that entry the one being edited.
+  - A following `.lib-save` updates that entry: same id, new `updated`, no new row.
+  - `.lib-new` clears the fields and the editing state, so the next save creates a new entry.
+- **Copy.** `.lib-copy` writes the command to `navigator.clipboard.writeText`. If that is missing or rejects, `.lib-msg` says to copy manually.
+- **Delete.** `.lib-delete` takes two clicks. The first turns the button into "Confirm delete"; the second, on the same button, deletes and saves. Any re-render cancels the pending confirm. `window.confirm` is not used. Deleting the entry being edited clears the editing state.
+- (Plumb review) `.lib-editing`, next to Save, shows `Editing: <name>` while an entry is being edited and is empty otherwise. A `hashchange` that loads a new command ends the editing state (indicator and "Editing …" message cleared), so Save then creates a new entry. New clears it too.
+- (Plumb review) Copy to my library checks `makeEntry`'s result. An invalid starter entry, such as a fixture title over 100 characters, shows a message instead of throwing.
+- Every button is a native `<button type="button">` with an `aria-label` that includes the entry name.
+
+## R35. CCSF starter set
+
+- `starterEntries(STARTER_DATA)` returns read-only entries for examples whose `kind` is `valid` or `placeholder` (63 in the current fixture). `broken`, `fragment` and `pipeline` examples are excluded.
+- Each entry is `{id: 'ccsf:' + src, name: title || src, cmd, src, category: category || 'Other', kind, tags: normalizeTags(['ccsf', slug(category || 'other')]), source: 'ccsf:' + src, readOnly: true}`. Ids are unique.
+- `slug` lowercases the category, replaces runs of characters outside `[a-z0-9_.]` with `-`, and trims `-` from the ends. `'OT / ICS'` becomes `ot-ics`. This was clarified in review: plain `normalizeTags` would drop it.
+- `starterOrigin(STARTER_DATA)` returns `{repo: source, commit}`.
+- UI: a `details.starter` panel ("CCSF starter commands") shows the origin repository and the short commit as text. It contains `.starter-category` (a select: "All categories" plus distinct categories, sorted) and `.starter-list` with `.starter-entry[data-src]` rows. Each row has:
+  - a `code` with the command;
+  - `.starter-src`, whose text is exactly the `src` (file:line);
+  - `.starter-category-label`;
+  - `.starter-kind` (placeholder rows contain "fill this in");
+  - `.lib-status`;
+  - the buttons `.starter-open` and `.starter-save` ("Copy to my library").
+- Starter rows have no delete or edit controls, and the starter set is never written to storage.
+- `.starter-open` loads the command like `.lib-open`, but nothing is marked as being edited. It pre-fills the name and tags, so `.lib-save` creates a user copy.
+- `.starter-save` adds a user entry with `source = 'ccsf:' + src`, name and tags from the starter entry. When an identical entry already exists, it is skipped and `.lib-msg` says so.
+
+## R36. Coexistence with Phase 1
+
+- On load, the URL hash or the default example decides `.cmd`. The library and starter set never change `.cmd` until the user clicks Open.
+- Library and starter data never appear in `location.hash`. Opening an entry updates the hash to that command via `replaceState`.
+- Everything stays text-only DOM. The shim's `innerHTML` trap and R24's static checks still apply, now to `library.js` too.
+- (Plumb review) `#scan-desk label {min-width: 0}` and `#scan-desk input[type=file] {width: 100%; min-width: 0}` keep the file input inside 320px.
+- The library and starter panels fit the R25 narrow-width rules: no fixed widths over 320px, and rows wrap long commands.
+
+## Open items for Phil (Phase 2)
+
+1. Starter categories are by source area (Active Directory, OT / ICS, Linux, Windows, Pivoting, Recon), added as a `category` field in the fixture. The alternative is by scan purpose (discovery, service detection, scripts).
+2. The `pipeline` example (RECON-GUIDE.md:114, `-sL … | grep`) is excluded as not a pure Nmap command. Fragments and broken examples are excluded too, not shown with a label.
+3. Import merge only appends and skips exact duplicates. It never overwrites an existing entry, even one with the same id.
+4. Storage is `localStorage`, per browser and per file origin. Opening `index.html` from a different path or browser gives a different, empty library; Export/Import is the way to move it.
+5. Starter entry names default to `file:line`. A `title` field in the fixture can override them.

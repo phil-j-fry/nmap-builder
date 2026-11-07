@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const VOID = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr']);
 const RAW = new Set(['style', 'script', 'textarea', 'title']);
 const BOOL_PROPS = ['hidden', 'disabled', 'required', 'open', 'readOnly', 'multiple', 'checked', 'autofocus'];
-const STR_PROPS = ['id', 'placeholder', 'type', 'name', 'title', 'role', 'href', 'rel', 'lang', 'for', 'autocomplete', 'inputMode', 'spellcheck'];
+const STR_PROPS = ['id', 'placeholder', 'type', 'name', 'title', 'role', 'href', 'rel', 'lang', 'for', 'autocomplete', 'inputMode', 'spellcheck', 'download', 'accept', 'target'];
 const UNSAFE = () => { throw new Error('Unsafe DOM API used (R24): text-only insertion is required'); };
 const decode = s => s.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos|nbsp);/gi, (m, e) => {
   const l = e.toLowerCase();
@@ -160,6 +160,10 @@ class Element extends Node {
     if (this.disabled) return;
     const ev = new Event('click', { bubbles: true, cancelable: true }); this.dispatchEvent(ev);
     if (!ev.defaultPrevented && this.localName === 'summary' && this.parentNode?.localName === 'details') this.parentNode.open = !this.parentNode.open;
+    if (!ev.defaultPrevented && this.localName === 'a' && this.hasAttribute('download')) {
+      const w = this.ownerDocument.defaultView, href = this.getAttribute('href') || '';
+      w.downloads.push({ name: this.getAttribute('download'), href, blob: w._objectURLs.get(href) });
+    }
   }
   select() {} setSelectionRange(a, b) { this.selectionStart = a; this.selectionEnd = b; }
   scrollIntoView() {} getBoundingClientRect() { return { x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0 }; }
@@ -260,7 +264,10 @@ function parseHTML(html, doc, parent) {
   }
 }
 
-function makeWindow({ hash = '', html, scripts }) {
+// options.storage: undefined (fresh in-memory), { mode: 'throw' } (access throws, like blocked storage),
+//   { mode: 'quota' } (setItem throws QuotaExceededError), { store: Map } (shared/prefilled backing map).
+// options.clipboard: undefined (records writes), 'reject' (writeText rejects), 'missing' (no navigator.clipboard).
+function makeWindow({ hash = '', html, scripts, storage: storageOpt = {}, clipboard: clipOpt }) {
   const doc = new Document();
   const win = new EventTargetish();
   doc._window = win;
@@ -270,25 +277,36 @@ function makeWindow({ hash = '', html, scripts }) {
     get href() { return 'file:///index.html' + this.search + this._hash; }, set href(v) { setURL(v, true); }, assign(v) { setURL(v, true); }, replace(v) { setURL(v, true); }, reload() {} };
   function setURL(url, fire) { url = String(url ?? ''); const h = url.indexOf('#'); const nh = h >= 0 ? url.slice(h) : ''; if (fire) location.hash = nh; else location._hash = nh === '#' ? '' : nh; }
   location._hash = hash && hash[0] !== '#' ? '#' + hash : hash;
-  const store = new Map();
-  const storage = { getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k), clear: () => store.clear(), get length() { return store.size; }, key: i => [...store.keys()][i] ?? null };
+  const store = storageOpt.store || new Map();
+  const storage = { getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => { if (storageOpt.mode === 'quota') { const e = new Error('QuotaExceededError'); e.name = 'QuotaExceededError'; throw e; } store.set(k, String(v)); }, removeItem: k => store.delete(k), clear: () => store.clear(), get length() { return store.size; }, key: i => [...store.keys()][i] ?? null };
+  const downloads = [], objectURLs = new Map();
+  class Blob { constructor(parts = [], opts = {}) { this._text = parts.map(String).join(''); this.type = opts.type || ''; this.size = this._text.length; } text() { return Promise.resolve(this._text); } }
+  class File extends Blob { constructor(parts, name, opts) { super(parts, opts); this.name = name; } }
+  const URLx = Object.assign(function (...a) { return new URL(...a); }, URL, {
+    createObjectURL: b => { const u = 'blob:shim/' + (objectURLs.size + 1); objectURLs.set(u, b); return u; },
+    revokeObjectURL: u => { objectURLs.delete(u); },
+  });
+  const clipboard = { written: [], writeText(t) { if (clipOpt === 'reject') return Promise.reject(new Error('denied')); this.written.push(t); return Promise.resolve(); } };
   win.dispatchEvent = ev => { ev.target ||= win; win._fire(ev); return !ev.defaultPrevented; };
   function Option(text = '', value, defSel, sel) { const o = doc.createElement('option'); o.textContent = text; if (value !== undefined) o.setAttribute('value', value); if (defSel) o.setAttribute('selected', ''); if (sel) o._selected = true; return o; }
   Object.assign(win, {
     document: doc, location, history, Option, Event, KeyboardEvent, CustomEvent, InputEvent: Event, FocusEvent: Event,
     Node, Element, HTMLElement: Element, Text, DocumentFragment,
-    navigator: { userAgent: 'dom-shim', clipboard: { written: [], writeText(t) { this.written.push(t); return Promise.resolve(); } } },
-    localStorage: storage, sessionStorage: storage,
+    navigator: clipOpt === 'missing' ? { userAgent: 'dom-shim' } : { userAgent: 'dom-shim', clipboard },
+    downloads, Blob, File, FileReader: undefined,
     setTimeout, clearTimeout, setInterval, clearInterval, queueMicrotask,
     requestAnimationFrame: f => setTimeout(() => f(Date.now()), 0), cancelAnimationFrame: clearTimeout,
     matchMedia: q => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {} }),
     getComputedStyle: () => new Proxy({}, { get: () => '' }),
-    console, URL, URLSearchParams, encodeURIComponent, decodeURIComponent, JSON, Math, Date, Map, Set, Promise, Intl,
+    console, URL: URLx, URLSearchParams, encodeURIComponent, decodeURIComponent, JSON, Math, Date, Map, Set, Promise, Intl,
     innerWidth: 375, innerHeight: 800, devicePixelRatio: 1,
     alert: () => { win.alerts = (win.alerts || 0) + 1; }, confirm: () => false, prompt: () => null,
     fetch: () => { throw new Error('fetch is not allowed (offline, nothing is fetched)'); },
     XMLHttpRequest: function () { throw new Error('XMLHttpRequest is not allowed'); },
   });
+  for (const name of ['localStorage', 'sessionStorage'])
+    Object.defineProperty(win, name, { configurable: true, enumerable: true, get() { if (storageOpt.mode === 'throw') { const e = new Error('SecurityError: The operation is insecure.'); e.name = 'SecurityError'; throw e; } return storage; } });
+  win._store = store; win._objectURLs = objectURLs;
   win.window = win.self = win.globalThis = win.top = win.parent = win;
   parseHTML(html, doc, doc.body);
   const ctx = vm.createContext(win);

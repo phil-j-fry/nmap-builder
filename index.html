@@ -1,16 +1,534 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Nmap command workbook</title><body><div id="scan-desk">
 <style>
-#scan-desk{color-scheme:light dark;--bg:light-dark(#fafbf8,#192020);--ink:light-dark(#182e2b,#edf3ee);--line:light-dark(#bccdc5,#475955);--tint:light-dark(#e9f1eb,#273b32);font:15px/1.55 system-ui;color:var(--ink);background:var(--bg);padding:clamp(14px,3vw,28px);max-width:1000px;margin:auto;border-radius:14px}#scan-desk *{box-sizing:border-box}#scan-desk h2{font-weight:500;font-size:26px;margin:0 0 14px}#scan-desk h3{font-size:16px;margin:12px 0 4px}#scan-desk textarea,#scan-desk input,#scan-desk select,#scan-desk button{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;max-width:100%}#scan-desk textarea{display:block;background:var(--tint);width:100%;font:15px/1.6 ui-monospace,monospace;resize:vertical;margin:6px 0}#scan-desk details{border-top:1px solid var(--line);padding:10px 0}#scan-desk summary{font-weight:500}#scan-desk .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin:10px 0}#scan-desk label{display:grid;gap:3px}#scan-desk .result,#scan-desk .filebox,#scan-desk .builder-msg{overflow-wrap:anywhere}#scan-desk .result{padding:12px 15px;background:var(--tint);margin:14px 0;border-radius:8px}#scan-desk .token{display:grid;grid-template-columns:minmax(120px,1fr) 2fr auto;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);align-items:start;overflow-wrap:anywhere}#scan-desk code{font:14px/1.5 ui-monospace,monospace}#scan-desk .note{font-size:13px}#scan-desk .problem,#scan-desk .builder-msg{color:light-dark(#842c12,#ffc7b3)}#scan-desk .warnings{color:light-dark(#6b4a00,#f3d58a)}#scan-desk .problem p,#scan-desk .warnings p{margin:4px 0}#scan-desk .token.placeholder code{font-style:italic}#scan-desk .token[data-kind=shell] code,#scan-desk .token[data-kind=unknown] code{color:light-dark(#842c12,#ffc7b3)}#scan-desk select{width:100%}#scan-desk .filebox textarea{min-height:54px}#scan-desk p{margin:6px 0}@media(max-width:500px){#scan-desk .token{grid-template-columns:1fr auto}#scan-desk .token span{grid-row:2;grid-column:1/-1}}
+#scan-desk{color-scheme:light dark;--bg:light-dark(#fafbf8,#192020);--ink:light-dark(#182e2b,#edf3ee);--line:light-dark(#bccdc5,#475955);--tint:light-dark(#e9f1eb,#273b32);font:15px/1.55 system-ui;color:var(--ink);background:var(--bg);padding:clamp(14px,3vw,28px);max-width:1000px;margin:auto;border-radius:14px}#scan-desk *{box-sizing:border-box}#scan-desk h2{font-weight:500;font-size:26px;margin:0 0 14px}#scan-desk h3{font-size:16px;margin:12px 0 4px}#scan-desk textarea,#scan-desk input,#scan-desk select,#scan-desk button{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;max-width:100%}#scan-desk textarea{display:block;background:var(--tint);width:100%;font:15px/1.6 ui-monospace,monospace;resize:vertical;margin:6px 0}#scan-desk details{border-top:1px solid var(--line);padding:10px 0}#scan-desk summary{font-weight:500}#scan-desk .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin:10px 0}#scan-desk label{display:grid;gap:3px;min-width:0}#scan-desk input[type=file]{width:100%;min-width:0}#scan-desk .result,#scan-desk .filebox,#scan-desk .builder-msg{overflow-wrap:anywhere}#scan-desk .result{padding:12px 15px;background:var(--tint);margin:14px 0;border-radius:8px}#scan-desk .token{display:grid;grid-template-columns:minmax(120px,1fr) 2fr auto;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);align-items:start;overflow-wrap:anywhere}#scan-desk code{font:14px/1.5 ui-monospace,monospace}#scan-desk .note{font-size:13px}#scan-desk .problem,#scan-desk .builder-msg{color:light-dark(#842c12,#ffc7b3)}#scan-desk .warnings{color:light-dark(#6b4a00,#f3d58a)}#scan-desk .problem p,#scan-desk .warnings p{margin:4px 0}#scan-desk .token.placeholder code{font-style:italic}#scan-desk .token[data-kind=shell] code,#scan-desk .token[data-kind=unknown] code{color:light-dark(#842c12,#ffc7b3)}#scan-desk select{width:100%}#scan-desk .filebox textarea{min-height:54px}#scan-desk p{margin:6px 0}#scan-desk .lib-list,#scan-desk .starter-list{overflow-wrap:anywhere}#scan-desk .lib-editing{overflow-wrap:anywhere;min-width:0}#scan-desk .lib-entry,#scan-desk .starter-entry{padding:9px 0;border-bottom:1px solid var(--line)}#scan-desk .lib-entry code,#scan-desk .starter-entry code{display:block;margin:3px 0}#scan-desk .lib-entry-name{font-weight:500}#scan-desk .lib-meta{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px}#scan-desk .lib-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}@media(max-width:500px){#scan-desk .token{grid-template-columns:1fr auto}#scan-desk .token span{grid-row:2;grid-column:1/-1}}
 </style>
 <div class="note">NMAP 7.993 · COMMAND WORKBOOK</div><h2>Scan parser &amp; builder</h2>
 <label>Command<textarea class="cmd" rows="3" spellcheck="false">nmap -sT -n -p 102,502,2404,4840,20000,44818 --max-rate 10 --max-retries 1 -iL ot-ranges.txt --excludefile exclude.txt -oA $R/ot-find</textarea></label>
 <details><summary>Build with controls</summary><div class="controls"><label>Find a flag<input class="search" placeholder="Flag or keyword"></label><label>Category<select class="category"></select></label></div><label>Matching options<select class="choice"></select></label><p class="hint"></p><div class="controls"><label class="valuebox">Argument<input class="value"></label><button class="add" type="button">Add option</button></div><div class="controls"><label>Additional target<input class="target" placeholder="Address, CIDR or hostname"></label><button class="addtarget" type="button">Add target</button></div><p class="builder-msg" aria-live="polite"></p></details>
 <div class="result"><h3>What this command requests</h3><div aria-live="polite"><p class="prose"></p><p class="scope"></p></div><div class="problem" role="alert"></div><div class="warnings"></div></div><div class="filebox"></div>
 <h3>Breakdown</h3><div class="breakdown"></div>
+<details class="library"><summary>Saved commands</summary><p class="note">Saved in this browser only. Use Export to back up or share, and Import to load a file.</p><div class="controls"><label>Name<input class="lib-name" maxlength="100" required></label><label>Tags<input class="lib-tags" placeholder="Comma-separated"></label><button class="lib-save" type="button">Save command</button><button class="lib-new" type="button">New</button><span class="lib-editing"></span></div><div class="controls"><label>Search saved<input class="lib-search" type="search"></label><label>Tag<select class="lib-tag"></select></label></div><p class="lib-msg" role="status"></p><div class="lib-list"></div><div class="controls"><button class="lib-export" type="button">Export library</button><label>Import library<input class="lib-import" type="file" accept=".json,application/json"></label></div></details>
+<details class="starter"><summary>CCSF starter commands</summary><p class="starter-origin note"></p><label>Category<select class="starter-category"></select></label><div class="starter-list"></div></details>
 <details><summary>Coverage and limits</summary><p class="coverage"></p><p>Recognizing a flag does not verify every value, combination, build feature, or script argument. Names, files and shell variables remain literal. Nothing runs. The count covers distinct IPv4 addresses; complex targets remain symbolic.</p><a href="https://nmap.org/book/man.html">Nmap reference guide</a></details>
 </div>
 <script>
 const CATALOG="# Targets\n-iL@ -i@|Read targets from the named list; a dash means standard input.\n-iR@|Choose this many random IPv4 targets; zero requests an unbounded run.\n--exclude@|Omit these comma-separated targets before discovery.\n--excludefile@|Omit the addresses or networks listed in this file.\n--unique|Visit each target address only once when specifications overlap.\n--resolve-all|Scan every address returned for a target hostname.\n-4|Use IPv4.\n-6|Use IPv6; the installed build must support it.\n# Discovery and DNS\n-sn -sP|Discover responsive hosts without running a port scan.\n-sL|List the targets without probing them; reverse DNS may still occur.\n-Pn -P0 -PN -PD|Skip ordinary discovery and treat target addresses as up.\n-PS?|Discover hosts with TCP SYN probes; an attached list selects ports.\n-PA? -PT?|Discover hosts with TCP ACK probes; an attached list selects ports.\n-PU?|Discover hosts with UDP probes on the selected ports.\n-PY?|Discover hosts with SCTP INIT probes on the selected ports.\n-PO?|Discover hosts with selected IP protocol probes.\n-PE -PI -P|Send ICMP echo requests to discover hosts.\n-PP|Use ICMP timestamp requests for discovery.\n-PM|Use ICMP address-mask requests for discovery.\n-PR|Legacy ARP discovery request; local Ethernet discovery is normally automatic.\n-PB?|Legacy default IPv4 discovery mix; can specify ACK discovery ports.\n--disable-arp-ping|Turn off implicit ARP or IPv6 neighbor discovery.\n--discovery-ignore-rst|Ignore TCP reset replies when deciding whether a host is up.\n-n|Skip reverse DNS lookups.\n-R|Request reverse DNS even for targets that did not answer discovery.\n--system-dns|Use the operating system resolver.\n--dns-servers@|Use the specified DNS servers for supported lookups.\n--traceroute|Trace the network path to responsive targets.\n# Scan methods\n-sS|Send TCP SYN probes; the port scan does not finish the handshake.\n-sT|Ask the operating system to connect to each TCP port; an open port can accept a full connection.\n-sU|Send UDP probes and classify ports using replies, errors, or silence.\n-sA|Use TCP ACK probes to distinguish filtered from unfiltered paths; this does not identify open ports.\n-sW|Inspect TCP window sizes in reset replies; useful only on some systems.\n-sM|Use TCP FIN/ACK probes for a Maimon scan.\n-sN|Send TCP probes with no flags set.\n-sF|Send TCP FIN probes.\n-sX|Send TCP probes with FIN, PSH, and URG flags set.\n-sI@|Use the specified idle host for an IP-ID-based indirect scan.\n-sY|Probe SCTP ports with INIT packets.\n-sZ|Probe SCTP ports with COOKIE ECHO packets.\n-sO|Test IP protocol numbers rather than transport ports.\n-b@|Use an FTP relay for a bounce scan, if that server permits it.\n--scanflags@|Set the TCP header flags used by a compatible scan.\n# Ports and services\n-p@|Select explicit ports, port ranges, service patterns, or protocol-qualified groups; a dash selects ports 1\u201365535.\n-F|Use the fast port selection, normally the 100 most common per scanned protocol.\n-r|Probe selected ports in ascending order.\n--top-ports@|Select this many of the most frequent ports for each scanned protocol.\n--port-ratio@|Select ports above a frequency threshold in the services database.\n--exclude-ports@|Remove these ports from scanning and discovery probes.\n-sV -sR|Probe services to identify what is listening and, where possible, its version.\n--version-intensity@|Choose how extensively service probes are tried, from 0 through 9.\n--version-light|Use a light service probe set (intensity 2).\n--version-all|Try all service probes (intensity 9).\n--version-trace|Show diagnostic details from service probing.\n--allports|Include ports normally excluded from service detection.\n--servicedb@|Read port names and frequency information from this services database.\n--versiondb@|Use this service-probe database for version detection.\n# Scripts and OS\n-sC|Run the default NSE script set.\n--script@|Select NSE scripts by name, category, path, or expression.\n--script-args@|Pass the supplied names and values to NSE scripts.\n--script-args-file@|Read NSE arguments from this file.\n--script-trace|Show network communication generated by scripts.\n--script-updatedb|Rebuild the local script index.\n--script-help@|Display documentation for the selected scripts.\n--script-timeout@|Stop an individual script instance after this time limit.\n-O -O2|Request operating-system fingerprinting.\n--osscan-limit|Attempt OS fingerprinting only on promising targets.\n--osscan-guess --fuzzy|Allow less certain OS matches to be reported.\n--max-os-tries@|Limit attempts to fingerprint a host\u2019s operating system.\n-A|Request OS and service detection, default scripts, and traceroute where available.\n# Timing and performance\n-T@ --timing@|Choose a timing template, from 0 (slowest) through 5 (most aggressive), or its name.\n--min-hostgroup@|Set the preferred minimum number of hosts scanned as a group.\n--max-hostgroup@|Limit the number of hosts in a scan group.\n--min-parallelism@|Set a lower bound on outstanding probes.\n--max-parallelism@ -M@|Limit the number of outstanding probes.\n--initial-rtt-timeout@|Set the starting wait for a probe response.\n--min-rtt-timeout@|Set the shortest adaptive response timeout.\n--max-rtt-timeout@|Set the longest adaptive response timeout.\n--max-retries@|Limit port-probe retransmissions; this many retries may follow the first attempt.\n--host-timeout@|Stop work on an individual host after the specified time.\n--scan-delay@|Wait at least this long between probes to the same host.\n--max-scan-delay@|Limit the adaptive delay between probes to a host.\n--min-rate@|Request a minimum overall discovery and port-probe sending rate, in packets per second.\n--max-rate@|Limit the average discovery and port-probe sending rate across the scan, in packets per second.\n--defeat-rst-ratelimit|Favor scan speed when TCP resets are rate-limited; closed and filtered ports may be harder to distinguish.\n--defeat-icmp-ratelimit|Favor UDP scan speed when ICMP errors are rate-limited, at a cost to port-state detail.\n--randomize-hosts -rH|Shuffle the order of target hosts within groups.\n# Packet settings and routing\n-f -ff|Fragment supported raw IP probes; repeating f increases the fragment size.\n--mtu@|Specify a fragment size for supported raw probes.\n-D@|Include decoy addresses alongside the real scanner in supported raw scans.\n-S@|Use the supplied source IP address.\n-e@|Use this network interface.\n-g@ --source-port@|Set the source port for probes that support it.\n--proxies@ --proxy@|Use a proxy chain for supported connection-based features; this does not route the whole scan through proxies.\n--data@|Append the supplied hexadecimal payload to supported probes.\n--data-string@|Append the supplied string as probe payload.\n--data-length@|Append the given number of random payload bytes.\n--ip-options@|Set IPv4 header options on applicable probes.\n--ttl@|Set the outgoing packet time-to-live.\n--spoof-mac@|Select a source MAC address, prefix, or vendor for supported Ethernet traffic.\n--badsum|Use an intentionally invalid transport checksum on supported probes.\n--adler32|Use the obsolete Adler-32 SCTP checksum.\n--send-eth|Send applicable raw traffic as Ethernet frames.\n--send-ip|Send applicable raw traffic as IP packets.\n--route-dst@|Print the route Nmap would use to this destination.\n# Output and diagnostics\n-oN@ -o@|Write a normal text report to this file.\n-oX@|Write an XML report to this file.\n-oG@ -oM@ -m@|Write the legacy grepable report format.\n-oS@|Write the novelty text report format.\n-oA@|Request normal, XML, and grepable reports under one basename.\n-v? --verbose -vv|Increase the amount of progress and result detail printed.\n-d? --debug?|Enable debugging; an attached level selects the amount of detail.\n--reason|Include the evidence behind reported states.\n--open|Only display open or potentially open ports.\n--packet-trace|Print information about sent and received packets.\n--iflist|List the scanner\u2019s interfaces and routes.\n--append-output|Append results to existing output files.\n--resume@|Resume an interrupted scan from a supported log file.\n--noninteractive|Disable interactive keyboard shortcuts during a scan.\n--stylesheet@|Associate XML output with the specified stylesheet.\n--webxml|Associate XML output with Nmap\u2019s hosted stylesheet.\n--no-stylesheet|Do not associate XML output with a stylesheet.\n--stats-every@|Print progress statistics at the given interval.\n--log-errors|Compatibility option; error logging is already enabled.\n--deprecated-xml-osclass|Use the older XML representation of OS classes.\n# Program and compatibility\n-h --help|Display Nmap\u2019s usage summary.\n-V --version|Print the installed version.\n--datadir@|Look for Nmap data files in this directory.\n--privileged|Tell Nmap to assume raw-packet privileges; this does not grant permissions.\n--unprivileged|Tell Nmap to avoid features that require raw-packet privileges.\n--nsock-engine@|Choose an available network I/O engine.\n--release-memory|Compatibility option; current builds already release memory.\n--nogcc|Internal compatibility switch; not a normal scan setting.\n--thc|Novelty option; not a scan technique.\n-I|Retired ident scan option; ignored with a warning.\n-q|Accepted but has no effect in this release (no handler in nmap.cc).\n-oH@|Unsupported: direct HTML output is rejected; use XML and a stylesheet instead.\n-O1|Unsupported: first-generation OS detection was removed.\n";
+const STARTER_DATA={
+ "source": "https://github.com/nationalcptc-teamtools/City-College-of-San-Francisco",
+ "commit": "b532b18c1e0dfb22dbfe7d15bea7c9b70caa38e3",
+ "extracted": "2026-11-07",
+ "note": "Real commands from the team playbooks. kind is a first-pass label by the manager; Gadfly owns the expected outcomes. expect (optional) overrides the per-kind defaults; see REQUIREMENTS.md R26 for keys. category groups examples for the starter set (R35); new entries should set it (default 'Other').",
+ "examples": [
+  {
+   "src": "archive/AD/README.md:27",
+   "cmd": "nmap --script smb2-security-mode -p 445 <TARGET_IP>",
+   "kind": "placeholder",
+   "category": "Active Directory"
+  },
+  {
+   "src": "archive/AD/README.md:30",
+   "cmd": "nmap --script smb-protocols -p 445 <TARGET_IP>",
+   "kind": "placeholder",
+   "category": "Active Directory"
+  },
+  {
+   "src": "archive/AD/README.md:33",
+   "cmd": "nmap -sV -p 389,636,3268,3269 --script ldap-search,ldap-rootdse,ldap-novell-getpass <TARGET_IP>",
+   "kind": "placeholder",
+   "category": "Active Directory"
+  },
+  {
+   "src": "archive/AD/README.md:40",
+   "cmd": "nmap --script smb-vuln-ms17-010 -p 445 <IP_ADDRESS>",
+   "kind": "placeholder",
+   "category": "Active Directory"
+  },
+  {
+   "src": "archive/ICS/Readme.md:9",
+   "cmd": "nmap -Pn -sT --scan-delay 1s --max-parallelism 1-p80,102,443,502,1089, 1091,2222,4000,4840, 20000,34962,34964, 34980,44818,47808, 55000,55003 <target>",
+   "kind": "broken",
+   "category": "OT / ICS",
+   "comment": "--max-parallelism swallowed '1-p80,...' (missing space before -p), and the spaced port list leaks numeric targets. Must fail.",
+   "expect": {
+    "errorsInclude": [
+     "bad-value",
+     "bad-target"
+    ]
+   }
+  },
+  {
+   "src": "archive/ICS/Readme.md:10",
+   "cmd": "nmap -Pn -sU -p47808 --script bacnet-info <target>",
+   "kind": "placeholder",
+   "category": "OT / ICS"
+  },
+  {
+   "src": "archive/ICS/Readme.md:11",
+   "cmd": "nmap -Pn -sU -p44818 --script enip-info <target>",
+   "kind": "placeholder",
+   "category": "OT / ICS"
+  },
+  {
+   "src": "archive/ICS/Readme.md:12",
+   "cmd": "nmap -Pn -sT -p502 --script modbus-discover <target>",
+   "kind": "placeholder",
+   "category": "OT / ICS"
+  },
+  {
+   "src": "archive/ICS/Readme.md:13",
+   "cmd": "nmap -Pn -sT -p1911,4911 --script fox-info <target>",
+   "kind": "placeholder",
+   "category": "OT / ICS"
+  },
+  {
+   "src": "archive/ICS/Readme.md:14",
+   "cmd": "nmap -Pn -sT -p1962 --script pcworx-info <target>",
+   "kind": "placeholder",
+   "category": "OT / ICS"
+  },
+  {
+   "src": "archive/Scans/README.md:6",
+   "cmd": "nmap --script modbus-discover.nse --script-args='modbus-discover.agressive=true' -p 502 <host>",
+   "kind": "placeholder",
+   "category": "OT / ICS"
+  },
+  {
+   "src": "archive/Scans/README.md:10",
+   "cmd": "nmap --script bacnet-info -sU -p 47808 <host>",
+   "kind": "placeholder",
+   "category": "OT / ICS"
+  },
+  {
+   "src": "checklists/10-ad-internal.md:12",
+   "cmd": "nmap -sn -n -PE -iL scope.txt --excludefile exclude.txt -oA disc-icmp",
+   "kind": "valid",
+   "category": "Active Directory"
+  },
+  {
+   "src": "checklists/10-ad-internal.md:13",
+   "cmd": "nmap -sn -n -PS22,80,135,443,445,3389 -iL scope.txt --excludefile exclude.txt -oA disc-syn",
+   "kind": "valid",
+   "category": "Active Directory"
+  },
+  {
+   "src": "checklists/10-ad-internal.md:14",
+   "cmd": "nmap -sn -n -PA22,80,443,3389 -iL scope.txt --excludefile exclude.txt -oA disc-ack",
+   "kind": "valid",
+   "category": "Active Directory"
+  },
+  {
+   "src": "checklists/10-ad-internal.md:15",
+   "cmd": "nmap -sn -n -PR -iL scope.txt --excludefile exclude.txt -oA disc-arp",
+   "kind": "valid",
+   "category": "Active Directory"
+  },
+  {
+   "src": "checklists/10-ad-internal.md:18",
+   "cmd": "nmap -n -sC -sV <host> -oA svc --excludefile exclude.txt --exclude-ports <brittle ports>",
+   "kind": "placeholder",
+   "category": "Active Directory",
+   "expect": {
+    "placeholders": [
+     "<host>",
+     "<brittle ports>"
+    ],
+    "targets": [
+     "<host>"
+    ],
+    "warnings": []
+   }
+  },
+  {
+   "src": "checklists/10-ad-internal.md:48",
+   "cmd": "nmap --script smb-vuln-ms17-010 -p 445 <TARGET_IP>",
+   "kind": "placeholder",
+   "category": "Active Directory"
+  },
+  {
+   "src": "checklists/15-linux.md:10",
+   "cmd": "nmap -n -sT -p 21,22,25,111,2049,3306,5432,6379,27017,465,587,873 <host>",
+   "kind": "placeholder",
+   "category": "Linux"
+  },
+  {
+   "src": "checklists/15-linux.md:12",
+   "cmd": "nmap -n -sV -p <port> <host>",
+   "kind": "placeholder",
+   "category": "Linux"
+  },
+  {
+   "src": "checklists/15-linux.md:16",
+   "cmd": "nmap -n -sV -p 3306,5432,6379,27017 <host>",
+   "kind": "placeholder",
+   "category": "Linux"
+  },
+  {
+   "src": "checklists/15-linux.md:21",
+   "cmd": "nmap -n -p 21 --script ftp-anon <host>",
+   "kind": "placeholder",
+   "category": "Linux"
+  },
+  {
+   "src": "checklists/30-ot-ics-safe.md:15",
+   "cmd": "nmap -sT -Pn -p 502,102,44818 --max-rate 10 <host>",
+   "kind": "placeholder",
+   "category": "OT / ICS"
+  },
+  {
+   "src": "checklists/30-ot-ics-safe.md:16",
+   "cmd": "nmap -sT -p 502 --script modbus-discover <host>",
+   "kind": "placeholder",
+   "category": "OT / ICS"
+  },
+  {
+   "src": "checklists/30-ot-ics-safe.md:18",
+   "cmd": "nmap -Pn -sU -p 47808 --script bacnet-info <host>",
+   "kind": "placeholder",
+   "category": "OT / ICS"
+  },
+  {
+   "src": "checklists/30-ot-ics-safe.md:19",
+   "cmd": "nmap -Pn -sU -p 44818 --script enip-info <host>",
+   "kind": "placeholder",
+   "category": "OT / ICS"
+  },
+  {
+   "src": "checklists/30-ot-ics-safe.md:20",
+   "cmd": "nmap -Pn -sT -p 1911,4911 --script fox-info <host>",
+   "kind": "placeholder",
+   "category": "OT / ICS"
+  },
+  {
+   "src": "checklists/30-ot-ics-safe.md:21",
+   "cmd": "nmap -Pn -sT -p 1962 --script pcworx-info <host>",
+   "kind": "placeholder",
+   "category": "OT / ICS"
+  },
+  {
+   "src": "playbooks/general/02-pivoting-and-trust-boundaries.md:26",
+   "cmd": "nmap -n -sT -p 53,88,135,139,389,445,636,1433,3389,5985 <host>",
+   "kind": "placeholder",
+   "category": "Pivoting"
+  },
+  {
+   "src": "playbooks/ot/01-unauthenticated-hmi.md:30",
+   "cmd": "nmap -sT -Pn -p <HMI_WEB_PORT>,5900 --max-rate 10 <host>",
+   "kind": "placeholder",
+   "category": "OT / ICS",
+   "expect": {
+    "placeholders": [
+     "<HMI_WEB_PORT>",
+     "<host>"
+    ],
+    "targets": [
+     "<host>"
+    ]
+   }
+  },
+  {
+   "src": "playbooks/ot/02-default-hmi-passwords.md:30",
+   "cmd": "nmap -sT -Pn -p <APPROVED_PORT> --max-rate 10 <host>",
+   "kind": "placeholder",
+   "category": "OT / ICS"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:60",
+   "cmd": "nmap -sV",
+   "kind": "fragment",
+   "category": "Recon",
+   "expect": {
+    "flags": [
+     "-sV"
+    ],
+    "targets": []
+   }
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:108",
+   "cmd": "nmap -sL -n -iL scope.txt --excludefile exclude.txt",
+   "kind": "valid",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:114",
+   "cmd": "nmap -sL -n -iL scope.txt --excludefile exclude.txt | grep -Fw 'for 10.0.5.20'",
+   "kind": "pipeline",
+   "category": "Recon",
+   "expect": {
+    "shellText": "| grep -Fw 'for 10.0.5.20'",
+    "targets": [],
+    "flags": [
+     "-sL",
+     "-n",
+     "-iL",
+     "--excludefile"
+    ],
+    "warnings": [
+     "shell-operator"
+    ]
+   }
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:179",
+   "cmd": "sudo nmap -n -sS -sU -p T:80,U:161 <host>",
+   "kind": "placeholder",
+   "category": "Recon",
+   "expect": {
+    "flags": [
+     "-n",
+     "-sS",
+     "-sU",
+     "-p"
+    ],
+    "rules": []
+   }
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:328",
+   "cmd": "sudo nmap -sn -n -PE -iL scope.txt --excludefile exclude.txt -oA disc-icmp",
+   "kind": "valid",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:329",
+   "cmd": "sudo nmap -sn -n -PS22,80,135,443,445,3389 -iL scope.txt --excludefile exclude.txt -oA disc-syn",
+   "kind": "valid",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:332",
+   "cmd": "nmap -sL -iL live.txt --excludefile exclude.txt -oN names.txt",
+   "kind": "valid",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:333",
+   "cmd": "nmap -n --top-ports 100 --max-rate 100 --exclude-ports <OT-string> -iL live.txt --excludefile exclude.txt -oA top100",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:334",
+   "cmd": "nmap -n --top-ports 1000 --exclude-ports <OT-string> -iL <claimed-hosts> --excludefile exclude.txt -oA top1000",
+   "kind": "placeholder",
+   "category": "Recon",
+   "expect": {
+    "placeholders": [
+     "<OT-string>",
+     "<claimed-hosts>"
+    ],
+    "scope": "until placeholders are filled in"
+   }
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:335",
+   "cmd": "nmap -n -p- --max-rate 300 --exclude-ports <OT-string> <host> -oA full-<host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:336",
+   "cmd": "nmap -n -sV -p <open-ports> <host> -oA ver-<host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:337",
+   "cmd": "nmap -n -sC -p <open-ports> <host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:338",
+   "cmd": "sudo nmap -n -sU --top-ports 20 --max-rate 50 <host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:339",
+   "cmd": "nmap -n --script <name> -p <port> <host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:434",
+   "cmd": "nmap --resume <name>.nmap",
+   "kind": "placeholder",
+   "category": "Recon",
+   "expect": {
+    "placeholders": [
+     "<name>"
+    ],
+    "targets": [],
+    "errors": []
+   }
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:440",
+   "cmd": "sudo nmap -sn -n -PE -iL <targets> -oA after-<HHMM>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:445",
+   "cmd": "nmap -sT -n -p <the ports open before> <host> -oA recheck-<host>-<HHMM>",
+   "kind": "placeholder",
+   "category": "Recon",
+   "expect": {
+    "placeholders": [
+     "<the ports open before>",
+     "<host>",
+     "<HHMM>"
+    ],
+    "targets": [
+     "<host>"
+    ],
+    "scope": "until placeholders are filled in"
+   }
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:456",
+   "cmd": "nmap -n --top-ports 100 --max-rate 100 -oA top100 10.0.5.20",
+   "kind": "valid",
+   "category": "Recon",
+   "expect": {
+    "scope": "^1 distinct IPv4 address in scope"
+   }
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:503",
+   "cmd": "nmap -sT -n -p 102,502,2404,4840,20000,44818 --max-rate 10 --max-retries 1 -iL ot-ranges.txt --excludefile exclude.txt -oA ot-find",
+   "kind": "valid",
+   "category": "Recon",
+   "expect": {
+    "flags": [
+     "-sT",
+     "-n",
+     "-p",
+     "--max-rate",
+     "--max-retries",
+     "-iL",
+     "--excludefile",
+     "-oA"
+    ],
+    "scope": "^255 distinct",
+    "files": {
+     "ot-ranges.txt": "10.10.10.0/24",
+     "exclude.txt": "10.10.10.1"
+    }
+   }
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:596",
+   "cmd": "nmap -sT -n -p 53,88,135,139,389,445,636,1433,3389,5985 <host> -oA win-<host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:609",
+   "cmd": "nmap -n -p 445 --script smb-os-discovery,smb-protocols,smb2-security-mode <host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:610",
+   "cmd": "nmap -n -p 1433 --script ms-sql-info <host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:616",
+   "cmd": "nmap -sC -sV",
+   "kind": "fragment",
+   "category": "Recon",
+   "expect": {
+    "flags": [
+     "-sC",
+     "-sV"
+    ],
+    "targets": []
+   }
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:692",
+   "cmd": "nmap -sT -n -p 21,22,25,111,2049,3306,5432,6379,27017,465,587,873 <host> -oA lin-<host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:702",
+   "cmd": "nmap -n -p 25 --script smtp-commands <host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:703",
+   "cmd": "nmap -n -p 25 --script smtp-enum-users <host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:812",
+   "cmd": "nmap -sT -n -p 80,443,8000,8008,8080,8081,8443,8888,9000 <host> -oA web-<host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:820",
+   "cmd": "nmap -n -p 80,443 --script http-title,http-headers,http-methods <host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:1030",
+   "cmd": "nmap -n -sV -p 21 <host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:1043",
+   "cmd": "nmap -n -p 3389 --script rdp-enum-encryption <host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:1055",
+   "cmd": "sudo nmap -n -sn -PE -iL scope.txt --excludefile exclude.txt -oA disc-icmp",
+   "kind": "valid",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:1058",
+   "cmd": "nmap -n -sV -p <ports> <host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:1059",
+   "cmd": "nmap -n -sT -p 102,502,2404,4840,20000,44818 --max-rate 10 --max-retries 1 -iL ot-ranges.txt --excludefile exclude.txt -oA ot-find",
+   "kind": "valid",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/recon/RECON-GUIDE.md:1094",
+   "cmd": "nmap -n -sT -p 80,443,8000,8008,8080,8081,8443,8888,9000 <host>",
+   "kind": "placeholder",
+   "category": "Recon"
+  },
+  {
+   "src": "playbooks/windows/01-credentials-in-ldap.md:25",
+   "cmd": "nmap -Pn -sV -p 389,636,3268,3269 --script ldap-search,ldap-rootdse,ldap-novell-getpass <TARGET_IP>",
+   "kind": "placeholder",
+   "category": "Windows"
+  },
+  {
+   "src": "scripts/logged-shell.md:26",
+   "cmd": "nmap -sn -PE -iL scope.txt -oA disc-icmp",
+   "kind": "valid",
+   "category": "Recon"
+  }
+ ]
+};
 // Nmap command parser, builder helpers and IPv4 scope math. Pure functions only: no DOM, no I/O.
 // Requirement IDs (R1–R23) refer to REQUIREMENTS.md.
 
@@ -379,10 +897,20 @@ const SAME_RULE = {
 // Every flag whose value is checked (R13). README.md "Checked values" lists the same keys.
 const CHECKED_FLAGS = [...Object.keys(VALUE_RULES), ...Object.keys(SAME_RULE)];
 
+// Nmap reads a unitless time as seconds and refuses one at or above these limits (parse_tval_msecs, R29).
+const UNITLESS_TIME_LIMIT = {
+  '--max-rtt-timeout': 50, '--min-rtt-timeout': 50, '--initial-rtt-timeout': 50,
+  '--scan-delay': 100, '--max-scan-delay': 100, '--host-timeout': 10000,
+};
+
 function checkValue(key, val) {
   const rule = VALUE_RULES[SAME_RULE[key] || key];
   if (!rule || val === null || val === '' || hasPlaceholder(val)) return null;
-  return rule[0](val) ? null : `${key} ${val}: ${rule[1]}`;
+  if (!rule[0](val)) return `${key} ${val}: ${rule[1]}`;
+  const limit = UNITLESS_TIME_LIMIT[key];
+  if (limit !== undefined && /^[\d.]+$/.test(val) && +val >= limit)
+    return `${key} ${val}: Nmap reads a time without a unit as seconds and refuses ${limit} or more ("the default unit is seconds"). Use "${val}ms" for milliseconds, or add a unit (s, m, h).`;
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -643,6 +1171,192 @@ function decodeHash(h) {
   } catch { return null; }
 }
 
+// Saved-command library and CCSF starter set (R31–R33, R35). Pure functions only: no DOM.
+// Storage is passed in (localStorage-like); every access is guarded so blocked or full storage never throws.
+
+const LIBRARY_KEY = 'nmap-builder.library.v1';
+const LIBRARY_FORMAT = 'nmap-builder-library';
+const LIBRARY_VERSION = 1;
+const LIBRARY_LIMITS = { name: 100, cmd: 8000, tag: 32, tags: 10, entries: 1000, importBytes: 32000000 };
+
+const TAG_RE = /^[a-z0-9][a-z0-9_.-]{0,31}$/;
+const ID_RE = /^[A-Za-z0-9:._-]{1,64}$/;
+const MAX_SOURCE = 300;
+const BACKUP_KEYS = () => [LIBRARY_KEY + '.backup', ...Array.from({ length: 9 }, (_, i) => LIBRARY_KEY + '.backup-' + (i + 2))];
+let librarySeq = 0;
+
+const isoTime = now => new Date(now).toISOString();
+const newEntryId = now => 'e' + Math.floor(now).toString(36) + '-' + (++librarySeq).toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+const ownField = (obj, k) => (Object.prototype.hasOwnProperty.call(obj, k) ? obj[k] : undefined);
+const validName = n => typeof n === 'string' && n.trim().length >= 1 && n.trim().length <= LIBRARY_LIMITS.name;
+const validCmd = c => typeof c === 'string' && c.length <= LIBRARY_LIMITS.cmd && c.trim() !== '';
+const validTime = t => typeof t === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(t) && !Number.isNaN(Date.parse(t));
+
+// Comma-separated string or array → lowercase, dash-joined, validated, deduplicated tags (max 10).
+function normalizeTags(x) {
+  const list = Array.isArray(x) ? x : typeof x === 'string' ? x.split(',') : [];
+  const out = [];
+  for (const t of list) {
+    if (typeof t !== 'string') continue;
+    const tag = t.trim().toLowerCase().replace(/\s+/g, '-');
+    if (TAG_RE.test(tag) && !out.includes(tag)) out.push(tag);
+    if (out.length === LIBRARY_LIMITS.tags) break;
+  }
+  return out;
+}
+
+function makeEntry({ name, cmd, tags, source } = {}, { now = Date.now(), id } = {}) {
+  if (!validName(name)) return { ok: false, error: 'name' };
+  if (!validCmd(cmd)) return { ok: false, error: 'cmd' };
+  const t = isoTime(now);
+  return {
+    ok: true,
+    entry: {
+      id: typeof id === 'string' && ID_RE.test(id) ? id : newEntryId(now),
+      name: name.trim(), cmd, tags: normalizeTags(tags),
+      source: typeof source === 'string' && source.length <= MAX_SOURCE ? source : null,
+      created: t, updated: t,
+    },
+  };
+}
+
+function updateEntry(entry, changes = {}, now = Date.now()) {
+  const pick = k => (changes[k] !== undefined ? changes[k] : entry[k]);
+  const r = makeEntry({ name: pick('name'), cmd: pick('cmd'), tags: pick('tags'), source: pick('source') }, { now, id: entry.id });
+  if (!r.ok) return r;
+  r.entry.created = entry.created;
+  return r;
+}
+
+function searchLibrary(entries, { query = '', tag = '' } = {}) {
+  const terms = String(query || '').toLowerCase().split(/\s+/).filter(Boolean);
+  return entries
+    .filter(e => !tag || e.tags.includes(tag))
+    .filter(e => {
+      const hay = [e.name, e.cmd, e.tags.join(' '), e.source || ''].join('\n').toLowerCase();
+      return terms.every(t => hay.includes(t));
+    })
+    .sort((a, b) => (a.updated < b.updated ? 1 : a.updated > b.updated ? -1 : a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+}
+
+function allTags(entries) { return [...new Set(entries.flatMap(e => e.tags))].sort(); }
+
+// One stored or imported entry → a clean R31 entry, or null. Reads own fields only.
+function sanitizeEntry(raw, now) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const r = makeEntry({ name: ownField(raw, 'name'), cmd: ownField(raw, 'cmd'), tags: ownField(raw, 'tags'), source: ownField(raw, 'source') }, { now, id: ownField(raw, 'id') });
+  if (!r.ok) return null;
+  const created = ownField(raw, 'created'), updated = ownField(raw, 'updated');
+  if (validTime(created)) r.entry.created = created;
+  if (validTime(updated)) r.entry.updated = updated;
+  return r.entry;
+}
+
+function exportLibrary(entries, now = Date.now()) {
+  const clean = entries.map(e => ({ id: e.id, name: e.name, cmd: e.cmd, tags: e.tags, source: e.source ?? null, created: e.created, updated: e.updated }));
+  return JSON.stringify({ format: LIBRARY_FORMAT, version: LIBRARY_VERSION, exported: isoTime(now), entries: clean }, null, 2);
+}
+
+// Validate a library document (already-read text). Content is only ever treated as data.
+// maxChars and maxEntries are 0 for the app's own storage, which is always read in full (Plumb P2-1).
+function parseLibraryDoc(text, now, maxChars, maxEntries) {
+  const fail = msg => ({ ok: false, entries: [], errors: [msg], dropped: 0 });
+  if (typeof text !== 'string') return fail('The file could not be read as text.');
+  if (maxChars && text.length > maxChars) return fail(`The file is longer than ${maxChars.toLocaleString('en-US')} characters.`);
+  let doc;
+  try { doc = JSON.parse(text); } catch (e) { return fail('The file is not valid JSON: ' + e.message); }
+  if (!doc || typeof doc !== 'object' || Array.isArray(doc)) return fail('The file is not a saved-command library (expected a JSON object).');
+  if (ownField(doc, 'format') !== LIBRARY_FORMAT) return fail(`The file is not an ${LIBRARY_FORMAT} file.`);
+  const version = ownField(doc, 'version');
+  if (version !== LIBRARY_VERSION) {
+    return fail(Number.isInteger(version) && version > LIBRARY_VERSION
+      ? `The file is from a newer version of the workbook (library version ${version}); update the workbook to import it.`
+      : 'The file has an unsupported library version.');
+  }
+  const list = ownField(doc, 'entries');
+  if (!Array.isArray(list)) return fail('The file has no list of entries.');
+  if (maxEntries && list.length > maxEntries) return fail(`The file has more than ${maxEntries} entries.`);
+  const entries = [], ids = new Set();
+  let dropped = 0;
+  for (const raw of list) {
+    const e = sanitizeEntry(raw, now);
+    if (!e) { dropped++; continue; }
+    if (ids.has(e.id)) e.id = newEntryId(now); // ids are unique within a library; the first keeps its id
+    ids.add(e.id);
+    entries.push(e);
+  }
+  return { ok: true, entries, errors: [], dropped };
+}
+
+function parseLibraryFile(text) { return parseLibraryDoc(text, Date.now(), LIBRARY_LIMITS.importBytes, LIBRARY_LIMITS.entries); }
+
+function readLibrary(storage) {
+  const none = (status, backupKey = null) => ({ entries: [], status, dropped: 0, backupKey });
+  if (!storage) return none('unavailable');
+  let raw;
+  try { raw = storage.getItem(LIBRARY_KEY); } catch { return none('unavailable'); }
+  if (raw === null || raw === undefined) return none('empty');
+  const r = parseLibraryDoc(raw, Date.now(), 0, 0);
+  if (!r.ok) return none('corrupt', backupRaw(storage, raw));
+  return { entries: r.entries, status: 'ok', dropped: r.dropped, backupKey: null };
+}
+
+// Copy an unreadable stored value to a backup key without overwriting a different existing backup.
+// Returns the key where the value is verified stored (read back equal), or null.
+function backupRaw(storage, raw) {
+  for (const key of BACKUP_KEYS()) {
+    let current;
+    try { current = storage.getItem(key); } catch { return null; }
+    if (current === raw) return key;
+    if (current !== null && current !== undefined) continue;
+    try { storage.setItem(key, raw); return storage.getItem(key) === raw ? key : null; } catch { return null; }
+  }
+  return null;
+}
+
+function writeLibrary(storage, entries) {
+  if (!storage) return false;
+  try { storage.setItem(LIBRARY_KEY, exportLibrary(entries, Date.now())); return true; } catch { return false; }
+}
+
+const entrySignature = e => JSON.stringify([e.name, e.cmd, [...e.tags].sort()]);
+
+// Append incoming entries; skip exact duplicates (name, cmd, sorted tags); never modify existing ones.
+// Stops adding at LIBRARY_LIMITS.entries; entries left out for that reason are counted in `rejected`.
+function mergeLibrary(existing, incoming, now = Date.now()) {
+  const sigs = new Set(existing.map(entrySignature)), ids = new Set(existing.map(e => e.id));
+  const entries = [...existing];
+  let added = 0, skipped = 0, rejected = 0;
+  for (const e of incoming) {
+    const sig = entrySignature(e);
+    if (sigs.has(sig)) { skipped++; continue; }
+    if (entries.length >= LIBRARY_LIMITS.entries) { rejected++; continue; }
+    const id = ids.has(e.id) ? newEntryId(now) : e.id;
+    entries.push({ ...e, id });
+    sigs.add(sig); ids.add(id); added++;
+  }
+  return { entries, added, skipped, rejected };
+}
+
+// Starter set (R35): read-only entries for the valid and placeholder corpus examples.
+const STARTER_KINDS = ['valid', 'placeholder'];
+const categoryTag = c => c.toLowerCase().replace(/[^a-z0-9_.]+/g, '-').replace(/^-+|-+$/g, '');
+
+function starterEntries(data) {
+  const out = [], seen = new Set();
+  for (const ex of (data && Array.isArray(data.examples)) ? data.examples : []) {
+    if (!STARTER_KINDS.includes(ex.kind) || typeof ex.cmd !== 'string' || typeof ex.src !== 'string') continue;
+    const id = 'ccsf:' + ex.src;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const category = ex.category || 'Other';
+    out.push({ id, name: ex.title || ex.src, cmd: ex.cmd, src: ex.src, category, kind: ex.kind, tags: normalizeTags(['ccsf', categoryTag(category)]), source: id, readOnly: true });
+  }
+  return out;
+}
+
+function starterOrigin(data) { return { repo: data?.source, commit: data?.commit }; }
+
 (() => {
 // Browser UI. Text-only DOM insertion throughout (R24); command text never executes.
 const root = document.getElementById('scan-desk');
@@ -828,9 +1542,256 @@ function changed() {
 
 function loadHash() {
   const v = decodeHash(location.hash);
-  if (v !== null && v !== cmd.value) { cmd.value = v; refresh(); }
+  if (v !== null && v !== cmd.value) {
+    cmd.value = v;
+    refresh();
+    // A command from a new link is not the entry being edited (Plumb P2-5).
+    if (editingId) { setEditing(null); libMsg('Loaded a command from the link. Save creates a new entry.'); }
+  }
 }
 
+// ---- Saved-command library (R32–R34) ----
+// Storage may be blocked (getter throws) or full (setItem throws); the library then works in memory.
+const storage = (() => { try { return window.localStorage; } catch { return null; } })();
+let library = [], editingId = null, draftSource = null, storageOk = true, pendingDelete = null;
+const libMsg = t => set('.lib-msg', t);
+const UNAVAILABLE = 'Browser storage is unavailable, so saved commands last only for this session. Use Export to keep a copy.';
+const plural = (n, word) => n + ' ' + word + (n === 1 ? '' : 's');
+const fullMsg = () => `The library is full (${LIBRARY_LIMITS.entries} saved commands). Delete some, or export and start a new library, before adding more.`;
+
+// Which saved entry Save updates (null: Save creates a new entry). Shown next to Save.
+function setEditing(entry) {
+  editingId = entry ? entry.id : null;
+  draftSource = entry ? entry.source : null;
+  set('.lib-editing', entry ? 'Editing: ' + entry.name : '');
+}
+
+function commandStatus(text) {
+  const p = parse(text, map);
+  if (p.issues.length) return plural(p.issues.length, 'problem');
+  if (p.notes.length) return 'Fill in placeholders';
+  return 'Parses cleanly' + (p.warnings.length ? ' (' + plural(p.warnings.length, 'warning') + ')' : '');
+}
+
+function persist() {
+  if (storageOk && writeLibrary(storage, library)) return true;
+  libMsg(storageOk ? 'This change could not be saved: browser storage is full or blocked. It is kept for this session; use Export to keep a copy.' : UNAVAILABLE);
+  return false;
+}
+
+function button(className, text, name, onClick) {
+  const b = el('button', { type: 'button', className, textContent: text });
+  b.setAttribute('aria-label', text + ' ' + name);
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+function openCommand(text) {
+  cmd.value = text;
+  changed(); // explanation, breakdown and hash update as for typing
+}
+
+function renderLibrary() {
+  pendingDelete = null; // any re-render cancels a pending delete confirmation
+  const tagSel = $('.lib-tag'), current = tagSel.value, tags = allTags(library);
+  tagSel.replaceChildren(opt('', 'All tags'), ...tags.map(t => opt(t)));
+  tagSel.value = tags.includes(current) ? current : '';
+  const shown = searchLibrary(library, { query: $('.lib-search').value, tag: tagSel.value });
+  $('.lib-list').replaceChildren(...shown.map(libraryRow));
+  if (!shown.length) $('.lib-list').append(el('p', { className: 'note', textContent: library.length ? 'No saved commands match.' : 'No saved commands yet.' }));
+}
+
+function libraryRow(e) {
+  const del = button('lib-delete', 'Delete', e.name, () => removeEntry(e, del));
+  const row = el('div', { className: 'lib-entry' },
+    el('div', { className: 'lib-entry-name', textContent: e.name }),
+    el('code', { textContent: e.cmd }),
+    el('div', { className: 'lib-meta' },
+      el('span', { className: 'lib-entry-tags', textContent: e.tags.length ? 'Tags: ' + e.tags.join(', ') : 'No tags' }),
+      el('span', { className: 'lib-status', textContent: commandStatus(e.cmd) })),
+    el('div', { className: 'lib-actions' },
+      button('lib-open', 'Open', e.name, () => {
+        openCommand(e.cmd);
+        $('.lib-name').value = e.name;
+        $('.lib-tags').value = e.tags.join(', ');
+        setEditing(e);
+        libMsg(`Editing "${e.name}". Save updates it; New starts a separate entry.`);
+      }),
+      button('lib-copy', 'Copy', e.name, () => copyText(e.cmd)),
+      del));
+  row.setAttribute('data-id', e.id);
+  return row;
+}
+
+function copyText(text) {
+  const clip = navigator.clipboard;
+  if (!clip || typeof clip.writeText !== 'function') { libMsg('Clipboard access is not available here; select the command and copy it manually.'); return; }
+  clip.writeText(text).then(() => libMsg('Command copied.'), () => libMsg('Copying was blocked; select the command and copy it manually.'));
+}
+
+function removeEntry(e, b) {
+  if (pendingDelete && pendingDelete.id === e.id) {
+    library = library.filter(x => x.id !== e.id);
+    if (editingId === e.id) setEditing(null);
+    const saved = persist();
+    renderLibrary();
+    if (saved) libMsg(`Deleted "${e.name}".`);
+    return;
+  }
+  if (pendingDelete) { pendingDelete.button.textContent = 'Delete'; pendingDelete.button.setAttribute('aria-label', 'Delete ' + pendingDelete.name); }
+  pendingDelete = { id: e.id, name: e.name, button: b };
+  b.textContent = 'Confirm delete';
+  b.setAttribute('aria-label', 'Confirm delete ' + e.name);
+}
+
+function saveCurrent() {
+  const nameEl = $('.lib-name'), name = nameEl.value, tags = $('.lib-tags').value;
+  if (!name.trim()) { nameEl.reportValidity(); return; }
+  if (!cmd.value.trim()) { libMsg('There is no command to save yet: type or build one first.'); return; }
+  const editing = editingId && library.find(x => x.id === editingId);
+  if (!editing && library.length >= LIBRARY_LIMITS.entries) { libMsg(fullMsg()); return; }
+  const r = editing
+    ? updateEntry(editing, { name, cmd: cmd.value, tags, source: draftSource }, Date.now())
+    : makeEntry({ name, cmd: cmd.value, tags, source: draftSource }, { now: Date.now() });
+  if (!r.ok) {
+    if (r.error === 'name') nameEl.reportValidity();
+    libMsg(r.error === 'name' ? `Names can be 1–${LIBRARY_LIMITS.name} characters.` : `Commands can be up to ${LIBRARY_LIMITS.cmd} characters.`);
+    return;
+  }
+  library = editing ? library.map(x => (x.id === editing.id ? r.entry : x)) : [...library, r.entry];
+  if (editing) setEditing(r.entry); else draftSource = null;
+  const saved = persist();
+  renderLibrary();
+  if (saved) libMsg(editing ? `Updated "${r.entry.name}".` : `Saved "${r.entry.name}".`);
+}
+
+function newEntry() {
+  $('.lib-name').value = '';
+  $('.lib-tags').value = '';
+  setEditing(null);
+  libMsg('');
+}
+
+function exportFile() {
+  const blob = new Blob([exportLibrary(library, Date.now())], { type: 'application/json' });
+  const url = URL.createObjectURL(blob), tooBig = blob.size > LIBRARY_LIMITS.importBytes;
+  const a = el('a', { href: url, download: `nmap-library-${new Date().toISOString().slice(0, 10)}.json` });
+  root.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  libMsg(`Exported ${plural(library.length, 'saved command')}.` + (tooBig ? ` The file is over the import limit (${LIBRARY_LIMITS.importBytes.toLocaleString('en-US')} bytes), so this workbook cannot import it back in one piece.` : ''));
+}
+
+async function importFile() {
+  const input = $('.lib-import'), file = input.files && input.files[0];
+  if (!file) return;
+  if (typeof file.size === 'number' && file.size > LIBRARY_LIMITS.importBytes) { // never load a huge file (R33a)
+    input.value = '';
+    libMsg(`Import failed: the file is larger than ${LIBRARY_LIMITS.importBytes.toLocaleString('en-US')} bytes.`);
+    return;
+  }
+  let text;
+  try { text = await file.text(); } catch { libMsg('The file could not be read.'); input.value = ''; return; }
+  input.value = '';
+  const r = parseLibraryFile(text);
+  if (!r.ok) { libMsg('Import failed: ' + r.errors[0]); return; }
+  const m = mergeLibrary(library, r.entries, Date.now());
+  library = m.entries;
+  const saved = persist();
+  renderLibrary();
+  if (saved) libMsg(`Imported ${m.added}; skipped ${m.skipped} already in the library; ${r.dropped} invalid.` + (m.rejected ? ` ${m.rejected} not added: library full (${LIBRARY_LIMITS.entries} saved commands).` : ''));
+}
+
+function loadLibrary() {
+  const r = readLibrary(storage);
+  library = r.entries;
+  if (r.status === 'unavailable') { storageOk = false; libMsg(UNAVAILABLE); }
+  else if (r.status === 'corrupt') {
+    // Never overwrite an unreadable library unless its backup copy is verified (R32a).
+    storageOk = !!r.backupKey;
+    libMsg('The saved library could not be read' + (r.backupKey
+      ? `, so its contents were kept in browser storage under ${r.backupKey} and a new library starts empty.`
+      : ', and no backup copy could be made, so changes stay in this session only and the stored data is left untouched. Use Export to keep a copy.'));
+  } else if (r.dropped) libMsg(`${plural(r.dropped, 'saved entry')} could not be read and ${r.dropped === 1 ? 'was' : 'were'} skipped.`);
+  renderLibrary();
+}
+
+
+// ---- CCSF starter set (R35): read-only, never stored ----
+let starters = [];
+
+function renderStarterOrigin() {
+  const { repo, commit } = starterOrigin(STARTER_DATA), box = $('.starter-origin');
+  const source = /^https:\/\//.test(repo || '') ? el('a', { href: repo, textContent: repo }) : el('span', { textContent: repo || 'an unknown source' });
+  box.replaceChildren('Real commands from ', source, ` at commit ${String(commit || '').slice(0, 7)}. Each one keeps its source file:line. Copy one to your library to edit it.`);
+  const cats = [...new Set(starters.map(s => s.category))].sort();
+  $('.starter-category').replaceChildren(opt('', 'All categories'), ...cats.map(c => opt(c)));
+}
+
+function renderStarters() {
+  const cat = $('.starter-category').value;
+  $('.starter-list').replaceChildren(...starters.filter(s => !cat || s.category === cat).map(starterRow));
+}
+
+function starterRow(s) {
+  const row = el('div', { className: 'starter-entry' },
+    ...(s.name !== s.src ? [el('div', { className: 'lib-entry-name', textContent: s.name })] : []),
+    el('code', { textContent: s.cmd }),
+    el('div', { className: 'lib-meta' },
+      el('span', { className: 'starter-src', textContent: s.src }),
+      el('span', { className: 'starter-category-label', textContent: s.category }),
+      el('span', { className: 'starter-kind', textContent: s.kind === 'placeholder' ? 'Has placeholders: fill this in before running' : 'Complete command' }),
+      el('span', { className: 'lib-status', textContent: commandStatus(s.cmd) })),
+    el('div', { className: 'lib-actions' },
+      button('starter-open', 'Open', s.name, () => {
+        openCommand(s.cmd);
+        $('.lib-name').value = s.name;
+        $('.lib-tags').value = s.tags.join(', ');
+        setEditing(null); // saving creates a user copy
+        draftSource = s.source;
+        libMsg('Starter command opened. Save creates your own copy.');
+      }),
+      button('starter-save', 'Copy to my library', s.name, () => {
+        const r = makeEntry({ name: s.name, cmd: s.cmd, tags: s.tags, source: s.source }, { now: Date.now() });
+        if (!r.ok) { libMsg(`This starter command cannot be copied: its ${r.error === 'name' ? `name is not 1–${LIBRARY_LIMITS.name} characters` : 'command is empty or too long'}.`); return; }
+        const m = mergeLibrary(library, [r.entry], Date.now());
+        if (m.rejected) { libMsg(fullMsg()); return; }
+        if (!m.added) { libMsg(`"${r.entry.name}" is already in your library.`); return; }
+        library = m.entries;
+        const saved = persist();
+        renderLibrary();
+        if (saved) libMsg(`Copied "${s.name}" to your library.`);
+      })));
+  row.setAttribute('data-src', s.src);
+  return row;
+}
+
+// The library needs library.js and STARTER_DATA (bundled by build.py). Without them the page still works as the Phase 1 parser.
+function initLibrary() {
+  if (typeof readLibrary !== 'function' || typeof STARTER_DATA === 'undefined') {
+    for (const s of ['details.library', 'details.starter']) { const d = $(s); if (d) d.hidden = true; }
+    return;
+  }
+  $('.lib-save').addEventListener('click', saveCurrent);
+  $('.lib-new').addEventListener('click', newEntry);
+  for (const s of ['.lib-search', '.lib-tag']) for (const type of ['input', 'change']) $(s).addEventListener(type, renderLibrary);
+  $('.lib-export').addEventListener('click', exportFile);
+  $('.lib-import').addEventListener('change', importFile);
+  window.addEventListener('storage', ev => {
+    if (ev.key !== LIBRARY_KEY && ev.key !== null) return;
+    const r = readLibrary(storage);
+    if (r.status === 'ok' || r.status === 'empty') { library = r.entries; renderLibrary(); }
+  });
+  $('.starter-category').addEventListener('change', renderStarters);
+  $('.starter-category').addEventListener('input', renderStarters);
+  starters = starterEntries(STARTER_DATA);
+  loadLibrary();
+  renderStarterOrigin();
+  renderStarters();
+}
+
+// ---- Boot ----
 cmd.addEventListener('input', changed);
 window.addEventListener('hashchange', loadHash);
 set('.coverage', map.size + ' named forms, including aliases and retired switches, checked against the literal long-option table and short-option string of Nmap 7.993. ' +
@@ -839,6 +1800,7 @@ const initial = decodeHash(location.hash);
 if (initial !== null) cmd.value = initial;
 filter();
 refresh();
+initLibrary();
 })();
 
 </script>
