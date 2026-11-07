@@ -52,7 +52,7 @@ const META = ';|&<>()';
 // Operators that end the Nmap command (R4). Longest first.
 const STOP_OPS = ['||', '|&', '&&', '|', '&', ';', '(', ')'];
 // Redirects are skipped with their filename, and parsing continues (R4, Decisions round 2). Longest first.
-const REDIRECT_OPS = ['&>>', '&>', '>>', '>|', '>&', '<<', '<>', '<&', '>', '<'];
+const REDIRECT_OPS = ['<<<', '&>>', '&>', '>>', '>|', '>&', '<<', '<>', '<&', '>', '<'];
 
 // Returns {
 //   words:  [{v, start, end, afterRedirect}]  shell words in source order,
@@ -182,15 +182,21 @@ function lex(text) {
       // A file-descriptor number directly before the operator belongs to it (2>/dev/null).
       const last = words.at(-1);
       if (last && last.end === i && c !== '&' && /^\d+$/.test(text.slice(last.start, last.end))) { words.pop(); start = last.start; }
+      if (redirect === '<<') {
+        // Here-document (<<WORD or <<-WORD): the following lines are shell input, not Nmap arguments.
+        stopHere(start, 'shell-redirect', 'Here-document (<<): a real shell would feed the following lines to Nmap as standard input. They are shown as shell syntax and not interpreted.');
+        break;
+      }
       i += redirect.length;
-      let end = i, j = i;
+      let end = i, j = i, file = null;
       while (j < n && isBlank(text[j])) j++;
-      if (j < n && text[j] !== '\n' && !META.includes(text[j]) && text[j] !== '#') {
+      const fileStarts = text[j] === '<' ? PLACEHOLDER_AT.test(text.slice(j)) : !META.includes(text[j]);
+      if (j < n && text[j] !== '\n' && text[j] !== '#' && fileStarts) {
         i = j;
-        const file = readWord();
+        file = readWord();
         if (file) end = file.end;
       }
-      shells.push({ start, end, stop: false, code: 'shell-redirect' });
+      shells.push({ start, end, stop: false, code: 'shell-redirect', file });
       warnOnce('shell-redirect', `Redirect ${redirect}: a real shell would redirect input or output there. The operator and its filename are skipped, and the rest of the command is still read.`);
       afterRedirect = true;
       continue;
@@ -472,7 +478,8 @@ function parse(text, map) {
   res.items.sort((a, b) => a.start - b.start);
 
   // Placeholders (R8): every word after the program, in source order.
-  for (const w of body) for (const m of w.v.matchAll(PLACEHOLDER_ALL())) if (!res.placeholders.includes(m[0])) res.placeholders.push(m[0]);
+  const valued = [...body, ...shells.map(sh => sh.file).filter(Boolean)].sort((a, b) => a.start - b.start);
+  for (const w of valued) for (const m of w.v.matchAll(PLACEHOLDER_ALL())) if (!res.placeholders.includes(m[0])) res.placeholders.push(m[0]);
 
   checkCombinations();
 

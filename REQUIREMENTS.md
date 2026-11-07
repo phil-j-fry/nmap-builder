@@ -72,6 +72,8 @@ POSIX `sh` word rules stay in place, including single quotes, double quotes, bac
 - Parsing then continues, so `nmap -oN x > log 10.0.0.1` keeps the target `10.0.0.1`.
 - A redirect never supplies a flag value: `nmap -oN > log 10.0.0.1` gives `missing-value`.
 - A redirect with no filename is a `shell` item of the operator alone.
+- (Review 2) A here-document `<<WORD` or `<<-WORD` (the delimiter may be quoted) is a stopping item: its body is input data, not arguments. It runs to the end of the input, with `stop: true`, under warning `shell-redirect`, whose message mentions "here-document". A here-string `<<< word` is an ordinary skipped redirect.
+- (Review 2) A placeholder can be a redirect filename: `> <outfile>` is one redirect item, and the placeholder is still listed in `placeholders`.
 - Each input with redirects gets warning `shell-redirect`, whose message says a shell would redirect input or output there.
 
 **Line breaks.** An unescaped newline (or CRLF) with non-whitespace on both sides is joined as a space. It gives one warning `line-break` per input, with the message "line break treated as a space; a real shell would run separate commands". Leading and trailing newlines are plain whitespace. A quoted newline is literal. A backslash-newline is a continuation with no warning. A `#` comment ends at its line, and parsing continues on the next line.

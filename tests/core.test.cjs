@@ -395,3 +395,22 @@ test('R12a Nmap-accepted spellings', async t => {
   for (const s of ['nmap -p "80,, 443" 10.0.0.1', 'nmap -p " " 10.0.0.1', 'nmap --host-timeout . 10.0.0.1', 'nmap --host-timeout 5. 10.0.0.1'])
     await t.test('invalid ' + s, () => assert.ok(errors(parse(s)).includes('bad-value')));
 });
+
+test('R4h here-documents and placeholder redirect targets (review 2)', async t => {
+  await t.test('<<EOF body is not parsed', () => {
+    const p = parse('nmap -sn -iL - <<EOF\n10.0.0.1\nEOF');
+    assert.deepEqual(T(p), []); assert.deepEqual(plain(p.flags).map(f => f.key), ['-sn', '-iL']);
+    const sh = plain(p.items).filter(i => i.kind === 'shell');
+    assert.equal(sh.length, 1); assert.equal(sh[0].stop, true); assert.equal(sh[0].text, '<<EOF\n10.0.0.1\nEOF');
+    assert.ok(warns(p).includes('shell-redirect')); assert.deepEqual(errors(p), []);
+    assert.match(diags(p, 'warn').find(d => d.code === 'shell-redirect').msg, /here-document/i);
+  });
+  await t.test('<<- also stops', () => { const p = parse("nmap -iL - <<-'END'\n\t10.0.0.1\nEND"); assert.deepEqual(T(p), []); assert.equal(plain(p.items).at(-1).stop, true); });
+  await t.test('<<< here-string is a skipped redirect', () => { const p = parse("nmap -iL - <<< '10.0.0.1' -sn"); assert.deepEqual(T(p), []); assert.deepEqual(plain(p.flags).map(f => f.key), ['-iL', '-sn']); assert.equal(plain(p.items).find(i => i.kind === 'shell').text, "<<< '10.0.0.1'"); });
+  await t.test('placeholder as redirect filename', () => {
+    const p = parse('nmap -sS 10.0.0.1 > <outfile> -n');
+    assert.deepEqual(T(p), ['10.0.0.1']); assert.deepEqual(plain(p.flags).map(f => f.key), ['-sS', '-n']);
+    assert.equal(plain(p.items).find(i => i.kind === 'shell').text, '> <outfile>');
+    assert.deepEqual(plain(p.placeholders), ['<outfile>']);
+  });
+});
