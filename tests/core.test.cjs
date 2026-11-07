@@ -414,3 +414,9 @@ test('R4h here-documents and placeholder redirect targets (review 2)', async t =
     assert.deepEqual(plain(p.placeholders), ['<outfile>']);
   });
 });
+
+test('R6b unclosed ${ (Plumb review)', async t => {
+  for (const s of ['nmap ${X x', 'nmap 10.0.0.1 ${HOST', 'nmap "${X" 10.0.0.1']) await t.test(s, () => { const p = parse(s); assert.ok(errors(p).includes('unclosed-expansion'), JSON.stringify(plain(p.issues))); });
+  await t.test('closed forms unaffected', () => assert.ok(!errors(parse('nmap ${X} 10.0.0.1')).includes('unclosed-expansion')));
+  await t.test('single-quoted is literal', () => assert.ok(!errors(parse("nmap '${X' 10.0.0.1")).includes('unclosed-expansion')));
+});

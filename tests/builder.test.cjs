@@ -65,6 +65,10 @@ const REMOVALS = [
   ["nmap -oN 'a b' -sV <host>", i => i.kind === 'target', "nmap -oN 'a b' -sV"],
   ['nmap 10.0.0.1 #trailing note', i => i.kind === 'shell', 'nmap 10.0.0.1'],
   ['nmap -oN x > log 10.0.0.1', i => i.kind === 'shell', 'nmap -oN x 10.0.0.1'],
+  // Plumb review: whitespace stripping must also eat backslash-newline continuations, not leave a stray '\'.
+  ['nmap -sS \\\n -p 80 \\\n 10.0.0.1', i => i.key === '-p', 'nmap -sS \\\n 10.0.0.1'],
+  ['nmap -sS \\\n 10.0.0.1', i => i.kind === 'target', 'nmap -sS'],
+  ['nmap -sS \\\r\n 10.0.0.1', i => i.kind === 'target', 'nmap -sS'],
   ['nmap 10.0.0.1 2>&1 | tee x', i => i.kind === 'shell' && i.stop, 'nmap 10.0.0.1 2>&1'],
 ];
 
@@ -76,6 +80,9 @@ test('R18 removeItem', async t => {
     assert.equal(out, want);
     const removed = items[idx], after = plain(parse(out).items);
     if (removed.kind === 'flag') assert.ok(!after.some(i => i.key === removed.key), 'flag still present');
+    const pa = parse(out), pb = parse(input);
+    assert.ok(!plain(pa.diagnostics).some(d => d.code === 'trailing-escape') || plain(pb.diagnostics).some(d => d.code === 'trailing-escape'), 'removal introduced a trailing escape');
+    assert.ok(!plain(pa.targets).includes(' '), 'removal produced a phantom escaped-space target');
   });
   await t.test('does not mutate parse result', () => { const s = 'nmap -sS 10.0.0.1', p = parse(s), before = JSON.stringify(plain(p)); ctx.removeItem(s, p, 0); assert.equal(JSON.stringify(plain(p)), before); });
 });

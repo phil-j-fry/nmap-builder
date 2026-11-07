@@ -38,3 +38,6 @@ G5. Persistence and hosting are unspecified. ui.js contains leftover `window.ope
 - R4 newline: join unescaped line breaks into one command, with a warning that a real shell would run them as separate commands.
 - Redirects (`>`, `>>`, `<`, `2>`, `&>`): skip the operator and its filename with a warning, then keep parsing. Only `;`, `|`, `&&`, `||` and `&` stop parsing. `<placeholder>` tokens are recognized before `<` is treated as a redirect.
 - Gadfly's extras approved: # comments, Unicode-dash error, smart-quote warning, no-effect warnings, 18 conflict rules.
+
+## Deferred to Phase 2 (manager, 2026-11-07)
+- Unitless time values above Nmap's limits are not flagged (Gadfly's note). Low priority.

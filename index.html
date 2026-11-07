@@ -1,11 +1,11 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Nmap command workbook</title><body><div id="scan-desk">
 <style>
-#scan-desk{color-scheme:light dark;--bg:light-dark(#fafbf8,#192020);--ink:light-dark(#182e2b,#edf3ee);--line:light-dark(#bccdc5,#475955);--tint:light-dark(#e9f1eb,#273b32);font:15px/1.55 system-ui;color:var(--ink);background:var(--bg);padding:clamp(14px,3vw,28px);max-width:1000px;margin:auto;border-radius:14px}#scan-desk *{box-sizing:border-box}#scan-desk h2{font-weight:500;font-size:26px;margin:0 0 14px}#scan-desk h3{font-size:16px;margin:12px 0 4px}#scan-desk textarea,#scan-desk input,#scan-desk select,#scan-desk button{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;max-width:100%}#scan-desk textarea{display:block;background:var(--tint);width:100%;font:15px/1.6 ui-monospace,monospace;resize:vertical;margin:6px 0}#scan-desk details{border-top:1px solid var(--line);padding:10px 0}#scan-desk summary{font-weight:500}#scan-desk .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin:10px 0}#scan-desk label{display:grid;gap:3px}#scan-desk .result{padding:12px 15px;background:var(--tint);margin:14px 0;border-radius:8px}#scan-desk .token{display:grid;grid-template-columns:minmax(120px,1fr) 2fr auto;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);align-items:start;overflow-wrap:anywhere}#scan-desk code{font:14px/1.5 ui-monospace,monospace}#scan-desk .note{font-size:13px}#scan-desk .problem,#scan-desk .builder-msg{color:light-dark(#842c12,#ffc7b3)}#scan-desk .warnings{color:light-dark(#6b4a00,#f3d58a)}#scan-desk .problem p,#scan-desk .warnings p{margin:4px 0}#scan-desk .token.placeholder code{font-style:italic}#scan-desk .token[data-kind=shell] code,#scan-desk .token[data-kind=unknown] code{color:light-dark(#842c12,#ffc7b3)}#scan-desk select{width:100%}#scan-desk .filebox textarea{min-height:54px}#scan-desk p{margin:6px 0}@media(max-width:500px){#scan-desk .token{grid-template-columns:1fr auto}#scan-desk .token span{grid-row:2;grid-column:1/-1}}
+#scan-desk{color-scheme:light dark;--bg:light-dark(#fafbf8,#192020);--ink:light-dark(#182e2b,#edf3ee);--line:light-dark(#bccdc5,#475955);--tint:light-dark(#e9f1eb,#273b32);font:15px/1.55 system-ui;color:var(--ink);background:var(--bg);padding:clamp(14px,3vw,28px);max-width:1000px;margin:auto;border-radius:14px}#scan-desk *{box-sizing:border-box}#scan-desk h2{font-weight:500;font-size:26px;margin:0 0 14px}#scan-desk h3{font-size:16px;margin:12px 0 4px}#scan-desk textarea,#scan-desk input,#scan-desk select,#scan-desk button{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;max-width:100%}#scan-desk textarea{display:block;background:var(--tint);width:100%;font:15px/1.6 ui-monospace,monospace;resize:vertical;margin:6px 0}#scan-desk details{border-top:1px solid var(--line);padding:10px 0}#scan-desk summary{font-weight:500}#scan-desk .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin:10px 0}#scan-desk label{display:grid;gap:3px}#scan-desk .result,#scan-desk .filebox,#scan-desk .builder-msg{overflow-wrap:anywhere}#scan-desk .result{padding:12px 15px;background:var(--tint);margin:14px 0;border-radius:8px}#scan-desk .token{display:grid;grid-template-columns:minmax(120px,1fr) 2fr auto;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);align-items:start;overflow-wrap:anywhere}#scan-desk code{font:14px/1.5 ui-monospace,monospace}#scan-desk .note{font-size:13px}#scan-desk .problem,#scan-desk .builder-msg{color:light-dark(#842c12,#ffc7b3)}#scan-desk .warnings{color:light-dark(#6b4a00,#f3d58a)}#scan-desk .problem p,#scan-desk .warnings p{margin:4px 0}#scan-desk .token.placeholder code{font-style:italic}#scan-desk .token[data-kind=shell] code,#scan-desk .token[data-kind=unknown] code{color:light-dark(#842c12,#ffc7b3)}#scan-desk select{width:100%}#scan-desk .filebox textarea{min-height:54px}#scan-desk p{margin:6px 0}@media(max-width:500px){#scan-desk .token{grid-template-columns:1fr auto}#scan-desk .token span{grid-row:2;grid-column:1/-1}}
 </style>
 <div class="note">NMAP 7.993 · COMMAND WORKBOOK</div><h2>Scan parser &amp; builder</h2>
 <label>Command<textarea class="cmd" rows="3" spellcheck="false">nmap -sT -n -p 102,502,2404,4840,20000,44818 --max-rate 10 --max-retries 1 -iL ot-ranges.txt --excludefile exclude.txt -oA $R/ot-find</textarea></label>
 <details><summary>Build with controls</summary><div class="controls"><label>Find a flag<input class="search" placeholder="Flag or keyword"></label><label>Category<select class="category"></select></label></div><label>Matching options<select class="choice"></select></label><p class="hint"></p><div class="controls"><label class="valuebox">Argument<input class="value"></label><button class="add" type="button">Add option</button></div><div class="controls"><label>Additional target<input class="target" placeholder="Address, CIDR or hostname"></label><button class="addtarget" type="button">Add target</button></div><p class="builder-msg" aria-live="polite"></p></details>
-<div class="result" aria-live="polite"><h3>What this command requests</h3><p class="prose"></p><p class="scope"></p><div class="problem" role="alert"></div><div class="warnings"></div></div><div class="filebox"></div>
+<div class="result"><h3>What this command requests</h3><div aria-live="polite"><p class="prose"></p><p class="scope"></p></div><div class="problem" role="alert"></div><div class="warnings"></div></div><div class="filebox"></div>
 <h3>Breakdown</h3><div class="breakdown"></div>
 <details><summary>Coverage and limits</summary><p class="coverage"></p><p>Recognizing a flag does not verify every value, combination, build feature, or script argument. Names, files and shell variables remain literal. Nothing runs. The count covers distinct IPv4 addresses; complex targets remain symbolic.</p><a href="https://nmap.org/book/man.html">Nmap reference guide</a></details>
 </div>
@@ -68,6 +68,8 @@ function lex(text) {
   const restIsBlank = pos => !text.slice(pos).trim();
   const trimmedEnd = start => Math.max(text.trimEnd().length, start + 1);
   const startsOp = (ops, pos) => ops.find(op => text.startsWith(op, pos));
+  // Length of a backslash line continuation at pos (\<LF> or \<CR><LF>), else 0.
+  const continuation = pos => text.startsWith('\\\n', pos) ? 2 : text.startsWith('\\\r\n', pos) ? 3 : 0;
 
   const stopHere = (start, code, msg) => {
     shells.push({ start, end: trimmedEnd(start), stop: true, code });
@@ -79,6 +81,10 @@ function lex(text) {
   const variableAt = pos => {
     const rest = text.slice(pos + 1);
     let label = null, m;
+    if (rest.startsWith('{') && !rest.includes('}')) {
+      once('unclosed-expansion', { level: 'error', code: 'unclosed-expansion', msg: '${ is not closed with }, so a real shell would stop with a syntax error.' });
+      return;
+    }
     if ((m = /^\{#?([A-Za-z_]\w*|[0-9@*#?$!-])?[^}]*\}/.exec(rest))) label = m[1] ? '$' + m[1] : '${' + rest.slice(1, rest.indexOf('}')) + '}';
     else if ((m = /^[A-Za-z_]\w*/.exec(rest))) label = '$' + m[0];
     else if ((m = /^[0-9@*#?$!-]/.exec(rest))) label = '$' + m[0];
@@ -103,7 +109,9 @@ function lex(text) {
           i++;
           break;
         }
-        if (next !== '\n') v += next; // backslash-newline is a line continuation
+        const cont = continuation(i);
+        if (cont) { i += cont; continue; } // backslash-newline is a line continuation
+        v += next;
         i += 2;
         continue;
       }
@@ -120,8 +128,10 @@ function lex(text) {
         while (i < n) {
           const d = text[i];
           if (d === '"') { closed = true; i++; break; }
-          if (d === '\\' && '"\\$`\n'.includes(text[i + 1] ?? '\0')) {
-            if (text[i + 1] !== '\n') v += text[i + 1];
+          const cont = d === '\\' && continuation(i);
+          if (cont) { i += cont; continue; }
+          if (d === '\\' && '"\\$`'.includes(text[i + 1] ?? '\0')) {
+            v += text[i + 1];
             i += 2;
             continue;
           }
@@ -155,7 +165,7 @@ function lex(text) {
   while (i < n && !stopped) {
     const c = text[i];
     if (isBlank(c)) { i++; continue; }
-    if (c === '\\' && text[i + 1] === '\n') { i += 2; continue; }
+    if (c === '\\' && continuation(i)) { i += continuation(i); continue; }
 
     if (c === '\n') {
       if ((words.length || shells.length) && !restIsBlank(i))
@@ -603,8 +613,17 @@ function removeItem(text, p, index) {
       return text.slice(0, it.start) + '-s' + letters + text.slice(it.end);
     }
   }
+  // Strip the separator run before the item: blanks, newlines and backslash-newline continuations,
+  // but never an escaped blank that belongs to the previous word.
+  const escaped = k => { let b = 0; while (k - 1 - b >= 0 && text[k - 1 - b] === '\\') b++; return b % 2 === 1; };
   let start = it.start;
-  while (start > 0 && /\s/.test(text[start - 1])) start--;
+  while (start > 0) {
+    const c = text[start - 1];
+    if (c === '\n' && text[start - 2] === '\\' && !escaped(start - 2)) start -= 2;
+    else if (c === '\n' && text[start - 2] === '\r' && text[start - 3] === '\\' && !escaped(start - 3)) start -= 3;
+    else if (/\s/.test(c) && !escaped(start - 1)) start--;
+    else break;
+  }
   return text.slice(0, start) + text.slice(it.end);
 }
 
@@ -652,8 +671,12 @@ function choose() {
 }
 
 function filter() {
-  const q = $('.search').value.toLowerCase(), cat = $('.category').value;
-  const matches = [...map.values()].filter(d => (!cat || d.group === cat) && (d.key + ' ' + d.desc).toLowerCase().includes(q));
+  const raw = $('.search').value.trim(), q = raw.toLowerCase(), cat = $('.category').value;
+  // Rank: exact key (same case, then any case), key prefix, then other matches; stable within each rank.
+  const rank = d => { const k = d.key.toLowerCase(); return d.key === raw ? 0 : k === q ? 1 : k.startsWith(q) ? 2 : 3; };
+  const matches = [...map.values()]
+    .filter(d => (!cat || d.group === cat) && (d.key + ' ' + d.desc).toLowerCase().includes(q))
+    .map((d, i) => [rank(d), i, d]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(x => x[2]);
   $('.choice').replaceChildren(...matches.map(d => opt(d.key, d.key + ' · ' + d.desc)));
   choose();
 }

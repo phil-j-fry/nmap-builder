@@ -100,7 +100,7 @@ Pass when:
 
 An unquoted or double-quoted `$NAME` or `${NAME}` stays literal and gives warning `shell-variable` that names the variable. The text is not a substitution and does not stop parsing.
 
-(R6a, review 1) The same `shell-variable` warning applies, naming the parameter (`$1`, `$@`) or the variable name (`HOST` for `${HOST:-x}`), to the special parameters `$0`–`$9`, `$@`, `$*`, `$#`, `$?`, `$$`, `$!` and `$-`, and to any `${…}` form, such as `${HOST:-x}` or `${#X}`. A `$` followed by nothing expandable (`a$`, a lone `$`) is literal.
+(R6a, review 1) The same `shell-variable` warning applies, naming the parameter (`$1`, `$@`) or the variable name (`HOST` for `${HOST:-x}`), to the special parameters `$0`–`$9`, `$@`, `$*`, `$#`, `$?`, `$$`, `$!` and `$-`, and to any `${…}` form, such as `${HOST:-x}` or `${#X}`. A `$` followed by nothing expandable (`a$`, a lone `$`) is literal. (R6b, Plumb review) An unquoted or double-quoted `${` with no closing `}` gives error `unclosed-expansion`, because the shell would fail or wait for more input.
 
 Pass when the OT example `nmap -sT -n -p 102,502,2404,4840,20000,44818 --max-rate 10 --max-retries 1 -iL ot-ranges.txt --excludefile exclude.txt -oA $R/ot-find` still has 8 flags, zero errors and the `-oA` value `$R/ot-find`, and it has exactly one warning, `shell-variable` mentioning `$R`. `'$R/x'` gives no warning. `\$R` gives no warning.
 
@@ -301,6 +301,8 @@ Pass when, for every required or attached catalog entry and every value in the R
 
 Pass when each row is exact and re-parsing the result never shows the removed item.
 
+(Plumb review) The whitespace run stripped before an item includes backslash-newline (and backslash-CRLF) continuations, so removal never leaves a stray `\`. Removing `-p 80` from `nmap -sS \⏎ -p 80 \⏎ 10.0.0.1` gives `nmap -sS \⏎ 10.0.0.1`, and removing the target from `nmap -sS \⏎ 10.0.0.1` gives `nmap -sS`. Removal must not introduce a `trailing-escape` error or an escaped-space target.
+
 ## R19. Breakdown in source order (UI)
 
 `.breakdown` has one `.token` row per item group. Grouped flags get one row each. Each row has `data-kind` set to `flag`, `unknown`, `target` or `shell`, a `code` element showing the text, a description and a `button` labelled "Remove".
@@ -319,9 +321,11 @@ Pass when rows appear in source order for `nmap -sS <host> --made-up 10.0.0.1 | 
 - Enter (keydown) in `.value` triggers Add option, and Enter in `.target` triggers Add target, each calling `preventDefault`.
 - After a Remove activation, focus moves to the Remove button now at the same row index, else the previous row's, else `.cmd`.
 
+(Plumb review) The search ranks results: exact key match first, then key-prefix matches, then description-only matches. Searching `-p` lists `-p` first.
+
 ## R21. Validation failures are visible (UI)
 
-- `.problem` has `role="alert"` and shows all error messages.
+- `.problem` has `role="alert"` and shows all error messages. (Plumb review) It is not inside an `aria-live` region, so errors are not announced twice. `.prose` and `.scope` are inside one.
 - `.warnings` (new) shows warnings and notes.
 - When there is any error, `.scope` is empty and `.prose` starts with "Partial interpretation".
 - When there are no diagnostics, `.problem` and `.warnings` are empty.
@@ -357,6 +361,7 @@ Static checks:
 - `view.html` keeps a `@media (max-width: …)` rule.
 - No fixed `width` or `min-width` is over 320px.
 - `.token` keeps `overflow-wrap:anywhere`.
+- (Plumb review) `.result`, `.filebox` and `.builder-msg` (or the `#scan-desk` root) also have `overflow-wrap:anywhere`, so long port lists in `.prose` don't cause sideways scroll at 320px.
 - `textarea` is `width:100%`.
 
 Manual check in R28 at 320px and 375px: no horizontal scroll, and every control is usable.

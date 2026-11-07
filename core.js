@@ -55,6 +55,8 @@ function lex(text) {
   const restIsBlank = pos => !text.slice(pos).trim();
   const trimmedEnd = start => Math.max(text.trimEnd().length, start + 1);
   const startsOp = (ops, pos) => ops.find(op => text.startsWith(op, pos));
+  // Length of a backslash line continuation at pos (\<LF> or \<CR><LF>), else 0.
+  const continuation = pos => text.startsWith('\\\n', pos) ? 2 : text.startsWith('\\\r\n', pos) ? 3 : 0;
 
   const stopHere = (start, code, msg) => {
     shells.push({ start, end: trimmedEnd(start), stop: true, code });
@@ -66,6 +68,10 @@ function lex(text) {
   const variableAt = pos => {
     const rest = text.slice(pos + 1);
     let label = null, m;
+    if (rest.startsWith('{') && !rest.includes('}')) {
+      once('unclosed-expansion', { level: 'error', code: 'unclosed-expansion', msg: '${ is not closed with }, so a real shell would stop with a syntax error.' });
+      return;
+    }
     if ((m = /^\{#?([A-Za-z_]\w*|[0-9@*#?$!-])?[^}]*\}/.exec(rest))) label = m[1] ? '$' + m[1] : '${' + rest.slice(1, rest.indexOf('}')) + '}';
     else if ((m = /^[A-Za-z_]\w*/.exec(rest))) label = '$' + m[0];
     else if ((m = /^[0-9@*#?$!-]/.exec(rest))) label = '$' + m[0];
@@ -90,7 +96,9 @@ function lex(text) {
           i++;
           break;
         }
-        if (next !== '\n') v += next; // backslash-newline is a line continuation
+        const cont = continuation(i);
+        if (cont) { i += cont; continue; } // backslash-newline is a line continuation
+        v += next;
         i += 2;
         continue;
       }
@@ -107,8 +115,10 @@ function lex(text) {
         while (i < n) {
           const d = text[i];
           if (d === '"') { closed = true; i++; break; }
-          if (d === '\\' && '"\\$`\n'.includes(text[i + 1] ?? '\0')) {
-            if (text[i + 1] !== '\n') v += text[i + 1];
+          const cont = d === '\\' && continuation(i);
+          if (cont) { i += cont; continue; }
+          if (d === '\\' && '"\\$`'.includes(text[i + 1] ?? '\0')) {
+            v += text[i + 1];
             i += 2;
             continue;
           }
@@ -142,7 +152,7 @@ function lex(text) {
   while (i < n && !stopped) {
     const c = text[i];
     if (isBlank(c)) { i++; continue; }
-    if (c === '\\' && text[i + 1] === '\n') { i += 2; continue; }
+    if (c === '\\' && continuation(i)) { i += continuation(i); continue; }
 
     if (c === '\n') {
       if ((words.length || shells.length) && !restIsBlank(i))
@@ -590,8 +600,17 @@ function removeItem(text, p, index) {
       return text.slice(0, it.start) + '-s' + letters + text.slice(it.end);
     }
   }
+  // Strip the separator run before the item: blanks, newlines and backslash-newline continuations,
+  // but never an escaped blank that belongs to the previous word.
+  const escaped = k => { let b = 0; while (k - 1 - b >= 0 && text[k - 1 - b] === '\\') b++; return b % 2 === 1; };
   let start = it.start;
-  while (start > 0 && /\s/.test(text[start - 1])) start--;
+  while (start > 0) {
+    const c = text[start - 1];
+    if (c === '\n' && text[start - 2] === '\\' && !escaped(start - 2)) start -= 2;
+    else if (c === '\n' && text[start - 2] === '\r' && text[start - 3] === '\\' && !escaped(start - 3)) start -= 3;
+    else if (/\s/.test(c) && !escaped(start - 1)) start--;
+    else break;
+  }
   return text.slice(0, start) + text.slice(it.end);
 }
 

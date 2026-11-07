@@ -150,6 +150,16 @@ test('R23 URL hash persistence', async t => {
   });
 });
 
+test('Plumb review: search ranking and live regions', async t => {
+  const u = load();
+  const search = q => { const s = u.$('.search'); s.value = q; s.dispatchEvent(new Event('input', { bubbles: true })); return u.$$('.choice option').map(o => o.value); };
+  await t.test('exact key first', () => { assert.equal(search('-p')[0], '-p'); assert.equal(search('--script')[0], '--script'); assert.equal(search('-sS')[0], '-sS'); });
+  await t.test('key prefix before description match', () => { const r = search('-p'), firstDesc = r.findIndex(k => !k.toLowerCase().startsWith('-p')); assert.ok(firstDesc < 0 || r.slice(firstDesc).every(k => !k.toLowerCase().startsWith('-p')), 'prefix matches must come before description-only matches'); });
+  await t.test('case-insensitive key match still finds -PS', () => assert.ok(search('-ps').includes('-PS')));
+  await t.test('.problem is not inside an aria-live region', () => { assert.equal(u.$('.problem').getAttribute('role'), 'alert'); assert.ok(u.$('.problem').parentNode.closest('[aria-live]') === null, 'alert inside aria-live is announced twice'); });
+  await t.test('.prose and .scope are announced', () => { for (const s of ['.prose', '.scope']) assert.ok(u.$(s).closest('[aria-live]'), s + ' needs an aria-live region'); });
+});
+
 test('R24 no dead widget code or unsafe DOM', async t => {
   const files = ['ui.js', 'core.js', 'view.html', 'index.html'];
   for (const f of files) await t.test(f, () => {
@@ -165,5 +175,10 @@ test('R25 narrow-width CSS', async t => {
   await t.test('has max-width media query', () => assert.match(css, /@media\s*\(\s*max-width\s*:/));
   await t.test('no fixed width over 320px', () => { for (const m of css.matchAll(/(?:^|[;{\s])(min-width|width)\s*:\s*(\d+)px/g)) assert.ok(+m[2] <= 320, `${m[1]}:${m[2]}px`); });
   await t.test('tokens wrap', () => assert.match(css, /\.token\{[^}]*overflow-wrap:\s*anywhere/));
+  await t.test('result, filebox and builder messages wrap long words (Plumb review)', () => {
+    const root = /#scan-desk\{[^}]*overflow-wrap:\s*anywhere/.test(css);
+    for (const sel of ['.result', '.filebox', '.builder-msg'])
+      assert.ok(root || new RegExp('#scan-desk ' + sel.replace('.', '\\.') + '[^{]*\\{[^}]*overflow-wrap:\\s*anywhere').test(css) || new RegExp('[,\\s]#scan-desk ' + sel.replace('.', '\\.') + '\\s*[,{][^}]*overflow-wrap:\\s*anywhere').test(css), sel + ' (or #scan-desk) needs overflow-wrap:anywhere');
+  });
   await t.test('textarea full width', () => assert.match(css, /textarea\{[^}]*width:\s*100%/));
 });

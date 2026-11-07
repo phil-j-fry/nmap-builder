@@ -26,8 +26,12 @@ function choose() {
 }
 
 function filter() {
-  const q = $('.search').value.toLowerCase(), cat = $('.category').value;
-  const matches = [...map.values()].filter(d => (!cat || d.group === cat) && (d.key + ' ' + d.desc).toLowerCase().includes(q));
+  const raw = $('.search').value.trim(), q = raw.toLowerCase(), cat = $('.category').value;
+  // Rank: exact key (same case, then any case), key prefix, then other matches; stable within each rank.
+  const rank = d => { const k = d.key.toLowerCase(); return d.key === raw ? 0 : k === q ? 1 : k.startsWith(q) ? 2 : 3; };
+  const matches = [...map.values()]
+    .filter(d => (!cat || d.group === cat) && (d.key + ' ' + d.desc).toLowerCase().includes(q))
+    .map((d, i) => [rank(d), i, d]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(x => x[2]);
   $('.choice').replaceChildren(...matches.map(d => opt(d.key, d.key + ' · ' + d.desc)));
   choose();
 }
